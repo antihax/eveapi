@@ -1,3 +1,3 @@
 # eveapi
-golang eve API and CREST module
+experemental golang eve API and CREST module
 Coming soon
