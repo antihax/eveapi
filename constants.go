@@ -47,7 +47,13 @@ func (c *EVETime) UnmarshalXML(d *xml.Decoder, start xml.StartElement) (err erro
 	var t string
 	d.DecodeElement(&t, &start)
 	t = strings.Replace(t, `"`, "", -1)
-	c.Time, err = time.Parse(eveXMLTimeLayout, t)
+	c.Time, err = time.Parse(eveTimeLayout, t)
+	return
+}
+func (c *EVETime) UnmarshalXMLAttr(a xml.Attr) (err error) {
+	t := a.Value
+	t = strings.Replace(t, `"`, "", -1)
+	c.Time, err = time.Parse(eveTimeLayout, t)
 	return
 }
 
@@ -68,6 +74,13 @@ func (c *EVEXMLTime) UnmarshalJSON(b []byte) (err error) {
 func (c *EVEXMLTime) UnmarshalXML(d *xml.Decoder, start xml.StartElement) (err error) {
 	var t string
 	d.DecodeElement(&t, &start)
+	t = strings.Replace(t, `"`, "", -1)
+	c.Time, err = time.Parse(eveXMLTimeLayout, t)
+	return
+}
+
+func (c *EVEXMLTime) UnmarshalXMLAttr(a xml.Attr) (err error) {
+	t := a.Value
 	t = strings.Replace(t, `"`, "", -1)
 	c.Time, err = time.Parse(eveXMLTimeLayout, t)
 	return
