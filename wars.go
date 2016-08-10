@@ -65,16 +65,10 @@ type War struct {
 func (c *AnonymousClient) Wars(page int) (*Wars, error) {
 	w := &Wars{AnonymousClient: c}
 	url := c.base.CREST + fmt.Sprintf("wars/?page=%d", page)
-	res, err := c.httpClient.Get(url)
-	defer res.Body.Close()
+	res, err := c.doJSON("GET", url, nil, w)
 	if err != nil {
 		return nil, err
 	}
-	err = decodeJSON(res, w)
-	if err != nil {
-		return nil, err
-	}
-
 	w.getFrameInfo(url, res)
 	return w, nil
 }
@@ -84,33 +78,20 @@ func (c *Wars) NextPage() (*Wars, error) {
 	if c.Next.HRef == "" {
 		return nil, nil
 	}
-	res, err := c.httpClient.Get(c.Next.HRef)
-	defer res.Body.Close()
+	res, err := c.doJSON("GET", c.Next.HRef, nil, w)
 	if err != nil {
 		return nil, err
 	}
-	err = decodeJSON(res, w)
-	if err != nil {
-		return nil, err
-	}
-
 	w.getFrameInfo(c.Next.HRef, res)
 	return w, nil
 }
 
 func (c *AnonymousClient) War(href string) (*War, error) {
 	w := &War{AnonymousClient: c}
-	url := href
-	res, err := c.httpClient.Get(url)
-	defer res.Body.Close()
+	res, err := c.doJSON("GET", href, nil, w)
 	if err != nil {
 		return nil, err
 	}
-	err = decodeJSON(res, w)
-	if err != nil {
-		return nil, err
-	}
-
 	w.getFrameInfo(res)
 	return w, nil
 }
@@ -118,16 +99,10 @@ func (c *AnonymousClient) War(href string) (*War, error) {
 func (c *AnonymousClient) WarByID(id int) (*War, error) {
 	w := &War{AnonymousClient: c}
 	url := c.base.CREST + fmt.Sprintf("wars/%d/", id)
-	res, err := c.httpClient.Get(url)
-	defer res.Body.Close()
+	res, err := c.doJSON("GET", url, nil, w)
 	if err != nil {
 		return nil, err
 	}
-	err = decodeJSON(res, w)
-	if err != nil {
-		return nil, err
-	}
-
 	w.getFrameInfo(res)
 	return w, nil
 }
