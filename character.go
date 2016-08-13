@@ -31,7 +31,7 @@ type CharacterInfo struct {
 	} `xml:"result>rowset>row"`
 }
 
-func (c *AnonymousClient) GetCharacterInfo(characterID int) (*CharacterInfo, error) {
+func (c *AnonymousClient) GetCharacterInfo(characterID int64) (*CharacterInfo, error) {
 	w := &CharacterInfo{}
 
 	url := c.base.XML + fmt.Sprintf("eve/CharacterInfo.xml.aspx?characterID=%d", characterID)

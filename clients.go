@@ -20,10 +20,11 @@ type AnonymousClient struct {
 type AuthenticatedClient struct {
 	AnonymousClient
 	tokenSource oauth2.TokenSource
+	characterID int64
 }
 
 const (
-	userAgent = "eveapi golang"
+	userAgent = "https://github.com/antihax/eveapi"
 	mediaType = "application/json"
 )
 
@@ -47,7 +48,7 @@ func (c *AnonymousClient) newRequest(method, urlStr string, body interface{}) (*
 	}
 
 	req.Header.Add("Content-Type", mediaType)
-	req.Header.Add("Accept", mediaType)
+	req.Header.Add("Accept", "application/vnd.ccp.eve.Api-v3+json")
 	req.Header.Add("User-Agent", c.userAgent)
 	return req, nil
 }
@@ -55,7 +56,6 @@ func (c *AnonymousClient) newRequest(method, urlStr string, body interface{}) (*
 func (c *AnonymousClient) do(method, urlStr string, body interface{}) (*http.Response, error) {
 	r, err := c.newRequest(method, urlStr, body)
 	res, err := c.httpClient.Do(r)
-	defer res.Body.Close()
 
 	if err != nil {
 		return nil, err
@@ -66,6 +66,7 @@ func (c *AnonymousClient) do(method, urlStr string, body interface{}) (*http.Res
 
 func (c *AnonymousClient) doXML(method, urlStr string, body interface{}, v interface{}) (*http.Response, error) {
 	res, err := c.do(method, urlStr, body)
+	defer res.Body.Close()
 	err = decodeXML(res, v)
 	if err != nil {
 		return nil, err
@@ -75,6 +76,7 @@ func (c *AnonymousClient) doXML(method, urlStr string, body interface{}, v inter
 
 func (c *AnonymousClient) doJSON(method, urlStr string, body interface{}, v interface{}) (*http.Response, error) {
 	res, err := c.do(method, urlStr, body)
+	defer res.Body.Close()
 	err = decodeJSON(res, v)
 	if err != nil {
 		return nil, err
@@ -104,16 +106,6 @@ func NewAnonymousClient(client *http.Client) *AnonymousClient {
 	c.base = eveTQ
 	c.httpClient = client
 	c.userAgent = userAgent
-	return c
-}
-
-// NewAuthenticatedClient assigns a token to a client.
-func NewAuthenticatedClient(client *http.Client, tok CRESTTokenP) *AuthenticatedClient {
-	c := &AuthenticatedClient{}
-	c.base = eveTQ
-	c.userAgent = userAgent
-	c.tokenSource = oauth2.StaticTokenSource(tok)
-	c.httpClient = oauth2.NewClient(createContext(client), c.tokenSource)
 	return c
 }
 
@@ -151,6 +143,7 @@ func decodeXML(res *http.Response, ret interface{}) error {
 func (c *AuthenticatedClient) Verify() (*VerifyResponse, error) {
 	v := &VerifyResponse{}
 	_, err := c.doJSON("GET", c.base.Login+"/oauth/verify", nil, v)
+	c.characterID = v.CharacterID
 	if err != nil {
 		return nil, err
 	}

@@ -17,7 +17,6 @@ type SSOAuthenticator struct {
 
 // Redirect type to hide oauth2 API
 type CRESTToken oauth2.Token
-type CRESTTokenP *oauth2.Token
 
 // NewSSOAuthenticator create a new CREST SSO Authenticator.
 // Requires your application clientID, clientSecret, and redirectURL.
@@ -52,13 +51,23 @@ func (c SSOAuthenticator) AuthorizeURL(state string, onlineAccess bool) string {
 // TokenExchange exchanges the code returned to the redirectURL with
 // the CREST server to an access token. A caching client must be passed.
 // This client MUST cache per CCP guidelines or face banning.
-func (c SSOAuthenticator) TokenExchange(client *http.Client, code string) (CRESTTokenP, error) {
+func (c SSOAuthenticator) TokenExchange(client *http.Client, code string) (*CRESTToken, error) {
 
 	tok, err := c.oauthConfig.Exchange(createContext(client), code)
 	if err != nil {
 		return nil, err
 	}
-	return tok, nil
+	return (*CRESTToken)(tok), nil
+}
+
+func (c SSOAuthenticator) GetClientFromToken(httpClient *http.Client, token *CRESTToken) *AuthenticatedClient {
+	client := c.oauthConfig.Client(createContext(httpClient), (*oauth2.Token)(token))
+
+	a := &AuthenticatedClient{}
+	a.base = eveTQ
+	a.userAgent = userAgent
+	a.httpClient = client
+	return a
 }
 
 // Add custom clients to the context.
