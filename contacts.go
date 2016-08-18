@@ -96,14 +96,15 @@ type Contacts struct {
 }
 
 func (c *AuthenticatedClient) SetContact(id int64, ref string, standing float64) error {
-	err := c.validateClient()
-
+	if err := c.validateClient(); err != nil {
+		return err
+	}
 	contact := Contact{Standing: standing}
 	contact.Contact.ID = id
 	contact.Contact.Href = ref
 
 	url := fmt.Sprintf(c.base.CREST+"characters/%d/contacts/", c.character.CharacterID)
-	_, err = c.doJSON("POST", url, contact, nil)
+	_, err := c.doJSON("POST", url, contact, nil)
 	if err != nil {
 		return err
 	}
@@ -112,15 +113,16 @@ func (c *AuthenticatedClient) SetContact(id int64, ref string, standing float64)
 }
 
 func (c *AuthenticatedClient) DeleteContact(id int64, ref string) error {
-	err := c.validateClient()
-
+	if err := c.validateClient(); err != nil {
+		return err
+	}
 	contact := Contact{}
 	contact.Contact.ID = id
 	contact.Contact.Href = ref
 
 	url := fmt.Sprintf(c.base.CREST+"characters/%d/contacts/%d/", c.character.CharacterID, id)
 	ret := make(map[string]interface{})
-	_, err = c.doJSON("DELETE", url, contact, &ret)
+	_, err := c.doJSON("DELETE", url, contact, &ret)
 	if err != nil {
 		return err
 	}
@@ -129,7 +131,9 @@ func (c *AuthenticatedClient) DeleteContact(id int64, ref string) error {
 }
 
 func (c *AuthenticatedClient) GetContacts() (*Contacts, error) {
-	err := c.validateClient()
+	if err := c.validateClient(); err != nil {
+		return nil, err
+	}
 	ret := &Contacts{AuthenticatedClient: c}
 
 	url := fmt.Sprintf(c.base.CREST+"characters/%d/contacts/", c.character.CharacterID)
