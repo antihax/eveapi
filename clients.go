@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"encoding/xml"
+	"errors"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -19,14 +20,25 @@ type AnonymousClient struct {
 
 type AuthenticatedClient struct {
 	AnonymousClient
-	tokenSource oauth2.TokenSource
-	characterID int64
+	token     *oauth2.Token
+	character *VerifyResponse
+}
+type ErrorMessage struct {
+	Message string
 }
 
 const (
 	userAgent = "https://github.com/antihax/eveapi"
 	mediaType = "application/json"
 )
+
+func (c *AnonymousClient) executeRequest(req *http.Request) (*http.Response, error) {
+	res, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+}
 
 func (c *AnonymousClient) newRequest(method, urlStr string, body interface{}) (*http.Request, error) {
 	rel, err := url.Parse(urlStr)
@@ -50,38 +62,114 @@ func (c *AnonymousClient) newRequest(method, urlStr string, body interface{}) (*
 	req.Header.Add("Content-Type", mediaType)
 	req.Header.Add("Accept", "application/vnd.ccp.eve.Api-v3+json")
 	req.Header.Add("User-Agent", c.userAgent)
+
 	return req, nil
 }
 
-func (c *AnonymousClient) do(method, urlStr string, body interface{}) (*http.Response, error) {
-	r, err := c.newRequest(method, urlStr, body)
-	res, err := c.httpClient.Do(r)
-
+func (c *AuthenticatedClient) newRequest(method, urlStr string, body interface{}) (*http.Request, error) {
+	req, err := c.AnonymousClient.newRequest(method, urlStr, body)
 	if err != nil {
 		return nil, err
 	}
 
-	return res, nil
+	c.token.SetAuthHeader(req)
+	return req, nil
 }
 
 func (c *AnonymousClient) doXML(method, urlStr string, body interface{}, v interface{}) (*http.Response, error) {
-	res, err := c.do(method, urlStr, body)
-	defer res.Body.Close()
-	err = decodeXML(res, v)
+	req, err := c.newRequest(method, urlStr, body)
 	if err != nil {
+		return nil, err
+	}
+	res, err := c.executeRequest(req)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+	buf, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return nil, err
+	}
+	if err := xml.Unmarshal([]byte(buf), v); err != nil {
 		return nil, err
 	}
 	return res, nil
 }
 
 func (c *AnonymousClient) doJSON(method, urlStr string, body interface{}, v interface{}) (*http.Response, error) {
-	res, err := c.do(method, urlStr, body)
-	defer res.Body.Close()
-	err = decodeJSON(res, v)
+	req, err := c.newRequest(method, urlStr, body)
 	if err != nil {
 		return nil, err
 	}
+	res, err := c.executeRequest(req)
+	if err != nil {
+		return nil, err
+	}
+	buf, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return nil, err
+	}
+	if res.StatusCode != http.StatusOK {
+		e := &ErrorMessage{}
+		if err := json.Unmarshal([]byte(buf), e); err != nil {
+			return nil, err
+		}
+		return nil, errors.New(e.Message)
+	}
+	if err := json.Unmarshal([]byte(buf), v); err != nil {
+		return nil, err
+	}
+
 	return res, nil
+}
+
+func (c *AuthenticatedClient) doXML(method, urlStr string, body interface{}, v interface{}) (*http.Response, error) {
+	req, err := c.newRequest(method, urlStr, body)
+	if err != nil {
+		return nil, err
+	}
+	res, err := c.executeRequest(req)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+	buf, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return nil, err
+	}
+	if err := xml.Unmarshal([]byte(buf), v); err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
+func (c *AuthenticatedClient) doJSON(method, urlStr string, body interface{}, v interface{}) (*http.Response, error) {
+	req, err := c.newRequest(method, urlStr, body)
+	if err != nil {
+		return nil, err
+	}
+	res, err := c.executeRequest(req)
+	if err != nil {
+		return nil, err
+	}
+	buf, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return nil, err
+	}
+	if res.StatusCode == http.StatusCreated {
+		return res, nil
+	} else if res.StatusCode != http.StatusOK {
+		e := &ErrorMessage{}
+		if err := json.Unmarshal([]byte(buf), e); err != nil {
+			return nil, err
+		}
+		return nil, errors.New(e.Message)
+	} else {
+		if err := json.Unmarshal([]byte(buf), v); err != nil {
+			return res, err
+		}
+	}
+	return res, err
 }
 
 func (c *AnonymousClient) SetUA(userAgent string) {
@@ -92,6 +180,10 @@ func (c *AnonymousClient) UseCustomURL(custom EveURI) {
 	c.base = custom
 }
 
+func (c *AuthenticatedClient) GetCharacterID() int64 {
+	return c.character.CharacterID
+}
+
 func (c *AnonymousClient) UseTestServer(testServer bool) {
 	if testServer == true {
 		c.base = eveSisi
@@ -100,7 +192,6 @@ func (c *AnonymousClient) UseTestServer(testServer bool) {
 	}
 }
 
-// NewAuthenticatedClient assigns a token to a client.
 func NewAnonymousClient(client *http.Client) *AnonymousClient {
 	c := &AnonymousClient{}
 	c.base = eveTQ
@@ -118,34 +209,26 @@ type VerifyResponse struct {
 	CharacterOwnerHash string
 }
 
-func decodeJSON(res *http.Response, ret interface{}) error {
-	buf, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		return err
-	}
-	if err := json.Unmarshal([]byte(buf), ret); err != nil {
-		return err
-	}
-	return err
-}
-
-func decodeXML(res *http.Response, ret interface{}) error {
-	buf, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		return err
-	}
-	if err := xml.Unmarshal([]byte(buf), ret); err != nil {
-		return err
-	}
-	return err
-}
-
+// Verify the client and collect user information.
 func (c *AuthenticatedClient) Verify() (*VerifyResponse, error) {
 	v := &VerifyResponse{}
-	_, err := c.doJSON("GET", c.base.Login+"/oauth/verify", nil, v)
-	c.characterID = v.CharacterID
+	_, err := c.doJSON("GET", c.base.Login+"oauth/verify", nil, v)
+	c.character = v
 	if err != nil {
 		return nil, err
 	}
 	return v, nil
+}
+
+// Verify that the client is validated.
+func (c *AuthenticatedClient) validateClient() error {
+	var err error
+	if c.character != nil {
+		return nil
+	}
+	c.character, err = c.Verify()
+	if err != nil {
+		return err
+	}
+	return nil
 }

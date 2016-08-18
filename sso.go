@@ -67,6 +67,8 @@ func (c SSOAuthenticator) GetClientFromToken(httpClient *http.Client, token *CRE
 	a.base = eveTQ
 	a.userAgent = userAgent
 	a.httpClient = client
+	a.token = (*oauth2.Token)(token)
+
 	return a
 }
 
