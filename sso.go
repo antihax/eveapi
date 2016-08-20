@@ -61,7 +61,7 @@ func (c SSOAuthenticator) TokenExchange(client *http.Client, code string) (*CRES
 }
 
 // GetClientFromToken returns a new authenticated client.
-// Caller must provide a caching http.Client that obeys all cacheUntil timers
+// Caller must provide a caching http.Client that obeys all cacheUntil timers.
 // One authenticated client per IP address or rate limits will be exceeded resulting in a ban.
 func (c SSOAuthenticator) GetClientFromToken(httpClient *http.Client, token *CRESTToken) *AuthenticatedClient {
 	client := c.oauthConfig.Client(createContext(httpClient), (*oauth2.Token)(token))
