@@ -14,7 +14,6 @@ type Wars struct {
 
 type War struct {
 	*AnonymousClient
-
 	crestSimpleFrame
 
 	TimeFinished  EVETime

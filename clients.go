@@ -48,7 +48,7 @@ func (c *AnonymousClient) newRequest(method, urlStr string, body interface{}) (*
 
 	buf := new(bytes.Buffer)
 	if body != nil {
-		err := json.NewEncoder(buf).Encode(body)
+		err = json.NewEncoder(buf).Encode(body)
 		if err != nil {
 			return nil, err
 		}
@@ -81,6 +81,7 @@ func (c *AnonymousClient) doXML(method, urlStr string, body interface{}, v inter
 	if err != nil {
 		return nil, err
 	}
+	<-xmlThrottle // Throttle XML requests
 	res, err := c.executeRequest(req)
 	if err != nil {
 		return nil, err
@@ -101,7 +102,11 @@ func (c *AnonymousClient) doJSON(method, urlStr string, body interface{}, v inte
 	if err != nil {
 		return nil, err
 	}
+	<-anonThrottle              // Throttle Anonymous CREST requests
+	anonConnectionLimit <- true // Limit concurrent requests
 	res, err := c.executeRequest(req)
+	<-anonConnectionLimit
+
 	if err != nil {
 		return nil, err
 	}
@@ -123,49 +128,34 @@ func (c *AnonymousClient) doJSON(method, urlStr string, body interface{}, v inte
 	return res, nil
 }
 
-func (c *AuthenticatedClient) doXML(method, urlStr string, body interface{}, v interface{}) (*http.Response, error) {
-	req, err := c.newRequest(method, urlStr, body)
-	if err != nil {
-		return nil, err
-	}
-	res, err := c.executeRequest(req)
-	if err != nil {
-		return nil, err
-	}
-	defer res.Body.Close()
-	buf, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		return nil, err
-	}
-	if err := xml.Unmarshal([]byte(buf), v); err != nil {
-		return nil, err
-	}
-	return res, nil
-}
-
 func (c *AuthenticatedClient) doJSON(method, urlStr string, body interface{}, v interface{}) (*http.Response, error) {
 	req, err := c.newRequest(method, urlStr, body)
 	if err != nil {
 		return nil, err
 	}
+
+	<-authedThrottle // Throttle Authenticated CREST requests
+
 	res, err := c.executeRequest(req)
 	if err != nil {
 		return nil, err
 	}
+
 	buf, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		return nil, err
 	}
+
 	if res.StatusCode == http.StatusCreated {
 		return res, nil
 	} else if res.StatusCode != http.StatusOK {
 		e := &ErrorMessage{}
-		if err := json.Unmarshal([]byte(buf), e); err != nil {
+		if err = json.Unmarshal([]byte(buf), e); err != nil {
 			return nil, err
 		}
 		return nil, errors.New(e.Message)
 	} else {
-		if err := json.Unmarshal([]byte(buf), v); err != nil {
+		if err = json.Unmarshal([]byte(buf), v); err != nil {
 			return res, err
 		}
 	}
