@@ -12,17 +12,21 @@ import (
 	"golang.org/x/oauth2"
 )
 
+// AnonymousClient for Public CREST and Public XML API queries.
 type AnonymousClient struct {
 	httpClient *http.Client
 	base       EveURI
 	userAgent  string
 }
 
+// AuthenticatedClient for Private CREST and Private XML API queries. SSO Authenticated.
 type AuthenticatedClient struct {
 	AnonymousClient
 	token     *oauth2.Token
 	character *VerifyResponse
 }
+
+// ErrorMessage format if a CREST query fails.
 type ErrorMessage struct {
 	Message string
 }
@@ -32,6 +36,7 @@ const (
 	mediaType = "application/json"
 )
 
+// Executes a request generated with newRequest
 func (c *AnonymousClient) executeRequest(req *http.Request) (*http.Response, error) {
 	res, err := c.httpClient.Do(req)
 	if err != nil {
@@ -40,6 +45,7 @@ func (c *AnonymousClient) executeRequest(req *http.Request) (*http.Response, err
 	return res, nil
 }
 
+// Creates a new http.Request for a public resource.
 func (c *AnonymousClient) newRequest(method, urlStr string, body interface{}) (*http.Request, error) {
 	rel, err := url.Parse(urlStr)
 	if err != nil {
@@ -66,6 +72,7 @@ func (c *AnonymousClient) newRequest(method, urlStr string, body interface{}) (*
 	return req, nil
 }
 
+// Provides a new http.Request for an authenticated resource.
 func (c *AuthenticatedClient) newRequest(method, urlStr string, body interface{}) (*http.Request, error) {
 	req, err := c.AnonymousClient.newRequest(method, urlStr, body)
 	if err != nil {
@@ -76,6 +83,7 @@ func (c *AuthenticatedClient) newRequest(method, urlStr string, body interface{}
 	return req, nil
 }
 
+// Calls a resource from the public XML API
 func (c *AnonymousClient) doXML(method, urlStr string, body interface{}, v interface{}) (*http.Response, error) {
 	req, err := c.newRequest(method, urlStr, body)
 	if err != nil {
@@ -97,6 +105,7 @@ func (c *AnonymousClient) doXML(method, urlStr string, body interface{}, v inter
 	return res, nil
 }
 
+// Calls a resource from the public CREST
 func (c *AnonymousClient) doJSON(method, urlStr string, body interface{}, v interface{}) (*http.Response, error) {
 	req, err := c.newRequest(method, urlStr, body)
 	if err != nil {
@@ -128,6 +137,7 @@ func (c *AnonymousClient) doJSON(method, urlStr string, body interface{}, v inte
 	return res, nil
 }
 
+// Calls a resource from authenticated CREST.
 func (c *AuthenticatedClient) doJSON(method, urlStr string, body interface{}, v interface{}) (*http.Response, error) {
 	req, err := c.newRequest(method, urlStr, body)
 	if err != nil {
@@ -162,18 +172,28 @@ func (c *AuthenticatedClient) doJSON(method, urlStr string, body interface{}, v 
 	return res, err
 }
 
+// SetUI set the user agent string of the CREST and XML client.
+// It is recommended to change this so that CCP can identify your app.
 func (c *AnonymousClient) SetUA(userAgent string) {
 	c.userAgent = userAgent
 }
 
+// UseCustomURL allows the base URLs to be changed should the need arise
+// for a third party proxy to be used.
 func (c *AnonymousClient) UseCustomURL(custom EveURI) {
 	c.base = custom
 }
 
+// GetCharacterID returns the associated characterID for this authenticated client.
+// Verify must be called prior to this becoming available or it will return 0.
 func (c *AuthenticatedClient) GetCharacterID() int64 {
+	if c.character == nil {
+		return 0
+	}
 	return c.character.CharacterID
 }
 
+// UseTestServer forces this client to use the test server URLs.
 func (c *AnonymousClient) UseTestServer(testServer bool) {
 	if testServer == true {
 		c.base = eveSisi
@@ -182,6 +202,9 @@ func (c *AnonymousClient) UseTestServer(testServer bool) {
 	}
 }
 
+// NewAnonymousClient generates a new anonymous client.
+// Caller must provide a caching http.Client that obeys all cacheUntil timers
+// One Anonymous client per IP address or rate limits will be exceeded resulting in a ban.
 func NewAnonymousClient(client *http.Client) *AnonymousClient {
 	c := &AnonymousClient{}
 	c.base = eveTQ

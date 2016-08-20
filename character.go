@@ -2,8 +2,9 @@ package eveapi
 
 import "fmt"
 
+// CharacterInfo returned data from XML API
 type CharacterInfo struct {
-	xmlApiFrame
+	xmlAPIFrame
 	CharacterID   int    `xml:"result>characterID"`
 	CharacterName string `xml:"result>characterName"`
 
@@ -31,6 +32,7 @@ type CharacterInfo struct {
 	} `xml:"result>rowset>row"`
 }
 
+// GetCharacterInfo queries the XML API for a given characterID.
 func (c *AnonymousClient) GetCharacterInfo(characterID int64) (*CharacterInfo, error) {
 	w := &CharacterInfo{}
 
