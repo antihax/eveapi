@@ -220,7 +220,7 @@ type VerifyResponse struct {
 // Verify the client and collect user information.
 func (c *AuthenticatedClient) Verify() (*VerifyResponse, error) {
 	v := &VerifyResponse{}
-	res, err := c.doJSON("GET", c.base.Login+"oauth/verify", nil, v, "application/json;")
+	_, err := c.doJSON("GET", c.base.Login+"oauth/verify", nil, v, "application/json;")
 	c.character = v
 	if err != nil {
 		return nil, err
