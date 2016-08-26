@@ -2,7 +2,9 @@ package eveapi
 
 import "fmt"
 
-type Wars struct {
+const warsCollectionType = "application/vnd.ccp.eve.WarsCollection-v1+json"
+
+type WarsCollectionV1 struct {
 	*AnonymousClient
 	crestPagedFrame
 
@@ -12,7 +14,9 @@ type Wars struct {
 	}
 }
 
-type War struct {
+const warType = "application/vnd.ccp.eve.War-v1+json"
+
+type WarV1 struct {
 	*AnonymousClient
 	crestSimpleFrame
 
@@ -24,7 +28,7 @@ type War struct {
 
 	Allies []struct {
 		HRef string
-		ID   int
+		ID   int64
 		Icon struct {
 			HRef string
 		}
@@ -39,7 +43,7 @@ type War struct {
 		Icon struct {
 			HRef string
 		}
-		ID        int
+		ID        int64
 		IskKilled float64
 	}
 	Mutual bool
@@ -55,16 +59,16 @@ type War struct {
 		Icon struct {
 			HRef string
 		}
-		ID        int
+		ID        int64
 		IskKilled float64
 	}
-	ID int
+	ID int64
 }
 
-func (c *AnonymousClient) Wars(page int) (*Wars, error) {
-	w := &Wars{AnonymousClient: c}
+func (c *AnonymousClient) Wars(page int) (*WarsCollectionV1, error) {
+	w := &WarsCollectionV1{AnonymousClient: c}
 	url := c.base.CREST + fmt.Sprintf("wars/?page=%d", page)
-	res, err := c.doJSON("GET", url, nil, w)
+	res, err := c.doJSON("GET", url, nil, w, warsCollectionType)
 	if err != nil {
 		return nil, err
 	}
@@ -72,12 +76,12 @@ func (c *AnonymousClient) Wars(page int) (*Wars, error) {
 	return w, nil
 }
 
-func (c *Wars) NextPage() (*Wars, error) {
-	w := &Wars{AnonymousClient: c.AnonymousClient}
+func (c *WarsCollectionV1) NextPage() (*WarsCollectionV1, error) {
+	w := &WarsCollectionV1{AnonymousClient: c.AnonymousClient}
 	if c.Next.HRef == "" {
 		return nil, nil
 	}
-	res, err := c.doJSON("GET", c.Next.HRef, nil, w)
+	res, err := c.doJSON("GET", c.Next.HRef, nil, w, warsCollectionType)
 	if err != nil {
 		return nil, err
 	}
@@ -85,9 +89,9 @@ func (c *Wars) NextPage() (*Wars, error) {
 	return w, nil
 }
 
-func (c *AnonymousClient) War(href string) (*War, error) {
-	w := &War{AnonymousClient: c}
-	res, err := c.doJSON("GET", href, nil, w)
+func (c *AnonymousClient) War(href string) (*WarV1, error) {
+	w := &WarV1{AnonymousClient: c}
+	res, err := c.doJSON("GET", href, nil, w, warType)
 	if err != nil {
 		return nil, err
 	}
@@ -95,10 +99,10 @@ func (c *AnonymousClient) War(href string) (*War, error) {
 	return w, nil
 }
 
-func (c *AnonymousClient) WarByID(id int) (*War, error) {
-	w := &War{AnonymousClient: c}
+func (c *AnonymousClient) WarByID(id int) (*WarV1, error) {
+	w := &WarV1{AnonymousClient: c}
 	url := c.base.CREST + fmt.Sprintf("wars/%d/", id)
-	res, err := c.doJSON("GET", url, nil, w)
+	res, err := c.doJSON("GET", url, nil, w, warType)
 	if err != nil {
 		return nil, err
 	}

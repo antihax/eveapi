@@ -31,11 +31,6 @@ type ErrorMessage struct {
 	Message string
 }
 
-const (
-	userAgent = "https://github.com/antihax/eveapi"
-	mediaType = "application/json"
-)
-
 // Executes a request generated with newRequest
 func (c *AnonymousClient) executeRequest(req *http.Request) (*http.Response, error) {
 	res, err := c.httpClient.Do(req)
@@ -46,7 +41,7 @@ func (c *AnonymousClient) executeRequest(req *http.Request) (*http.Response, err
 }
 
 // Creates a new http.Request for a public resource.
-func (c *AnonymousClient) newRequest(method, urlStr string, body interface{}) (*http.Request, error) {
+func (c *AnonymousClient) newRequest(method, urlStr string, body interface{}, mediaType string) (*http.Request, error) {
 	rel, err := url.Parse(urlStr)
 	if err != nil {
 		return nil, err
@@ -66,15 +61,15 @@ func (c *AnonymousClient) newRequest(method, urlStr string, body interface{}) (*
 	}
 
 	req.Header.Add("Content-Type", mediaType)
-	req.Header.Add("Accept", "application/vnd.ccp.eve.Api-v3+json")
+	req.Header.Add("Accept", BASE_API_VERSION)
 	req.Header.Add("User-Agent", c.userAgent)
 
 	return req, nil
 }
 
 // Provides a new http.Request for an authenticated resource.
-func (c *AuthenticatedClient) newRequest(method, urlStr string, body interface{}) (*http.Request, error) {
-	req, err := c.AnonymousClient.newRequest(method, urlStr, body)
+func (c *AuthenticatedClient) newRequest(method, urlStr string, body interface{}, mediaType string) (*http.Request, error) {
+	req, err := c.AnonymousClient.newRequest(method, urlStr, body, mediaType)
 	if err != nil {
 		return nil, err
 	}
@@ -85,7 +80,7 @@ func (c *AuthenticatedClient) newRequest(method, urlStr string, body interface{}
 
 // Calls a resource from the public XML API
 func (c *AnonymousClient) doXML(method, urlStr string, body interface{}, v interface{}) (*http.Response, error) {
-	req, err := c.newRequest(method, urlStr, body)
+	req, err := c.newRequest(method, urlStr, body, "application/xml")
 	if err != nil {
 		return nil, err
 	}
@@ -106,8 +101,8 @@ func (c *AnonymousClient) doXML(method, urlStr string, body interface{}, v inter
 }
 
 // Calls a resource from the public CREST
-func (c *AnonymousClient) doJSON(method, urlStr string, body interface{}, v interface{}) (*http.Response, error) {
-	req, err := c.newRequest(method, urlStr, body)
+func (c *AnonymousClient) doJSON(method, urlStr string, body interface{}, v interface{}, mediaType string) (*http.Response, error) {
+	req, err := c.newRequest(method, urlStr, body, mediaType)
 	if err != nil {
 		return nil, err
 	}
@@ -138,8 +133,8 @@ func (c *AnonymousClient) doJSON(method, urlStr string, body interface{}, v inte
 }
 
 // Calls a resource from authenticated CREST.
-func (c *AuthenticatedClient) doJSON(method, urlStr string, body interface{}, v interface{}) (*http.Response, error) {
-	req, err := c.newRequest(method, urlStr, body)
+func (c *AuthenticatedClient) doJSON(method, urlStr string, body interface{}, v interface{}, mediaType string) (*http.Response, error) {
+	req, err := c.newRequest(method, urlStr, body, mediaType)
 	if err != nil {
 		return nil, err
 	}
@@ -209,7 +204,7 @@ func NewAnonymousClient(client *http.Client) *AnonymousClient {
 	c := &AnonymousClient{}
 	c.base = eveTQ
 	c.httpClient = client
-	c.userAgent = userAgent
+	c.userAgent = USER_AGENT
 	return c
 }
 
@@ -225,7 +220,7 @@ type VerifyResponse struct {
 // Verify the client and collect user information.
 func (c *AuthenticatedClient) Verify() (*VerifyResponse, error) {
 	v := &VerifyResponse{}
-	_, err := c.doJSON("GET", c.base.Login+"oauth/verify", nil, v)
+	res, err := c.doJSON("GET", c.base.Login+"oauth/verify", nil, v, "application/json;")
 	c.character = v
 	if err != nil {
 		return nil, err

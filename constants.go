@@ -6,6 +6,12 @@ import (
 	"time"
 )
 
+const (
+	BASE_API_VERSION = "application/vnd.ccp.eve.Api-v5+json"
+	BASE_MEDIA_TYPE  = "application/json"
+	USER_AGENT       = "https://github.com/antihax/eveapi"
+)
+
 type EveURI struct {
 	AppManagement string
 	CREST         string
