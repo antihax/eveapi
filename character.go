@@ -5,19 +5,19 @@ import "fmt"
 // CharacterInfo returned data from XML API
 type CharacterInfo struct {
 	xmlAPIFrame
-	CharacterID   int    `xml:"result>characterID"`
+	CharacterID   int64  `xml:"result>characterID"`
 	CharacterName string `xml:"result>characterName"`
 
-	BloodlineID   int    `xml:"result>bloodlineID"`
+	BloodlineID   int64  `xml:"result>bloodlineID"`
 	BloodlineName string `xml:"result>bloodline"`
 
-	AncestryID   int    `xml:"result>ancestryID"`
+	AncestryID   int64  `xml:"result>ancestryID"`
 	AncestryName string `xml:"result>ancestry"`
 
-	CorporationID   int    `xml:"result>corporationID"`
+	CorporationID   int64  `xml:"result>corporationID"`
 	CorporationName string `xml:"result>corporation"`
 
-	AllianceID   int    `xml:"result>allianceID"`
+	AllianceID   int64  `xml:"result>allianceID"`
 	AllianceName string `xml:"result>alliance"`
 
 	Race string `xml:"result>race"`
@@ -25,8 +25,8 @@ type CharacterInfo struct {
 	SecurityStatus float64 `xml:"result>securityStatus"`
 
 	EmploymentHistory []struct {
-		RecordID        int        `xml:"recordID,attr"`
-		CorporationID   int        `xml:"corporationID,attr"`
+		RecordID        int64      `xml:"recordID,attr"`
+		CorporationID   int64      `xml:"corporationID,attr"`
 		CorporationName string     `xml:"corporationName,attr"`
 		StartDate       EVEXMLTime `xml:"startDate,attr"`
 	} `xml:"result>rowset>row"`
