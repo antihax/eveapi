@@ -22,72 +22,8 @@ type ContactCollectionV1 struct {
 	crestPagedFrame
 	Items []struct {
 		Standing  float64
-		Character struct {
-			Name        string
-			Corporation struct {
-				Name  string
-				IsNPC bool
-				Href  string
-
-				Logo struct {
-					I32x32 struct {
-						Href string
-					}
-					I64x64 struct {
-						Href string
-					}
-					I128x128 struct {
-						Href string
-					}
-					I256x256 struct {
-						Href string
-					}
-				}
-				ID int64
-			}
-			Alliance struct {
-				Name  string
-				IsNPC bool
-				Href  string
-
-				Logo struct {
-					I32x32 struct {
-						Href string
-					}
-					I64x64 struct {
-						Href string
-					}
-					I128x128 struct {
-						Href string
-					}
-					I256x256 struct {
-						Href string
-					}
-				}
-				ID int64
-			}
-			IsNPC     bool
-			Href      string
-			Capsuleer struct {
-				Href string
-			}
-			Portrait struct {
-				I32x32 struct {
-					Href string
-				}
-				I64x64 struct {
-					Href string
-				}
-				I128x128 struct {
-					Href string
-				}
-				I256x256 struct {
-					Href string
-				}
-			}
-			ID int64
-		}
-		Contact struct {
+		Character characterReference
+		Contact   struct {
 			Href string
 			Name string
 			ID   int64

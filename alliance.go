@@ -1,44 +1,24 @@
 package eveapi
 
-import (
-	"fmt"
-	"time"
-)
-
-type Corporation struct {
-	Name  string
-	isNPC bool
-	Href  string
-	Logo  struct {
-		I32x32 struct {
-			Href string
-		}
-		I64x64 struct {
-			Href string
-		}
-		I128x128 struct {
-			Href string
-		}
-		I256x256 struct {
-			Href string
-		}
-	}
-	ID int64
-}
+import "fmt"
 
 const allianceType = "application/vnd.ccp.eve.Alliance-v1+json"
 
 type AllianceV1 struct {
 	*AnonymousClient
 	crestSimpleFrame
-	StartDate           time.Time
+	StartDate           EVETime
 	CorporationsCount   int64
 	Description         string
-	ExecutorCorporation Corporation
+	ExecutorCorporation entityReference
+	CreatorCorporation  entityReference
 	URL                 string
 	ID                  int64
 	Name                string
 	ShortName           string
+	Deleted             bool
+	CreatorCharacter    characterReference
+	Corporations        []entityReference
 }
 
 const alliancesCollectionType = "application/vnd.ccp.eve.AlliancesCollection-v2+json"
@@ -48,7 +28,7 @@ type AlliancesCollectionV2 struct {
 	crestPagedFrame
 	Items []struct {
 		ShortName string
-		Href      string
+		HRef      string
 		ID        int64
 		Name      string
 	}
@@ -75,5 +55,26 @@ func (c *AlliancesCollectionV2) NextPage() (*AlliancesCollectionV2, error) {
 		return nil, err
 	}
 	w.getFrameInfo(c.Next.HRef, res)
+	return w, nil
+}
+
+func (c *AnonymousClient) Alliance(href string) (*AllianceV1, error) {
+	w := &AllianceV1{AnonymousClient: c}
+	res, err := c.doJSON("GET", href, nil, w, allianceType)
+	if err != nil {
+		return nil, err
+	}
+	w.getFrameInfo(res)
+	return w, nil
+}
+
+func (c *AnonymousClient) AllianceByID(id int64) (*AllianceV1, error) {
+	w := &AllianceV1{AnonymousClient: c}
+	href := c.base.CREST + fmt.Sprintf("alliances/%d/", id)
+	res, err := c.doJSON("GET", href, nil, w, allianceType)
+	if err != nil {
+		return nil, err
+	}
+	w.getFrameInfo(res)
 	return w, nil
 }
