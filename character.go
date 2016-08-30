@@ -3,7 +3,7 @@ package eveapi
 import "fmt"
 
 // CharacterInfo returned data from XML API
-type characterInfo struct {
+type CharacterInfo struct {
 	xmlAPIFrame
 	CharacterID   int64  `xml:"result>characterID"`
 	CharacterName string `xml:"result>characterName"`
@@ -33,8 +33,8 @@ type characterInfo struct {
 }
 
 // GetCharacterInfo queries the XML API for a given characterID.
-func (c *AnonymousClient) GetCharacterInfo(characterID int64) (*characterInfo, error) {
-	w := &characterInfo{}
+func (c *AnonymousClient) GetCharacterInfo(characterID int64) (*CharacterInfo, error) {
+	w := &CharacterInfo{}
 
 	url := c.base.XML + fmt.Sprintf("eve/CharacterInfo.xml.aspx?characterID=%d", characterID)
 	_, err := c.doXML("GET", url, nil, w)

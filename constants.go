@@ -36,7 +36,6 @@ var eveSisi = EveURI{
 	XML:           "https://api.testeveonline.com/",
 }
 
-// EVETime represents the CREST date format.
 type EVETime struct {
 	time.Time
 }
@@ -50,7 +49,6 @@ func (c *EVETime) UnmarshalJSON(b []byte) (err error) {
 	c.Time, err = time.Parse(eveTimeLayout, t)
 	return
 }
-
 func (c *EVETime) UnmarshalXML(d *xml.Decoder, start xml.StartElement) (err error) {
 	var t string
 	d.DecodeElement(&t, &start)
@@ -58,7 +56,6 @@ func (c *EVETime) UnmarshalXML(d *xml.Decoder, start xml.StartElement) (err erro
 	c.Time, err = time.Parse(eveTimeLayout, t)
 	return
 }
-
 func (c *EVETime) UnmarshalXMLAttr(a xml.Attr) (err error) {
 	t := a.Value
 	t = strings.Replace(t, `"`, "", -1)
@@ -66,7 +63,6 @@ func (c *EVETime) UnmarshalXMLAttr(a xml.Attr) (err error) {
 	return
 }
 
-// EVEXMLTime represents the XML API date format... Because they are different.
 type EVEXMLTime struct {
 	time.Time
 }

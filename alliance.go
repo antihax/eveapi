@@ -4,7 +4,7 @@ import "fmt"
 
 const allianceType = "application/vnd.ccp.eve.Alliance-v1+json"
 
-type allianceV1 struct {
+type AllianceV1 struct {
 	*AnonymousClient
 	crestSimpleFrame
 	StartDate           EVETime
@@ -23,7 +23,7 @@ type allianceV1 struct {
 
 const alliancesCollectionType = "application/vnd.ccp.eve.AlliancesCollection-v2+json"
 
-type alliancesCollectionV2 struct {
+type AlliancesCollectionV2 struct {
 	*AnonymousClient
 	crestPagedFrame
 	Items []struct {
@@ -34,8 +34,8 @@ type alliancesCollectionV2 struct {
 	}
 }
 
-func (c *AnonymousClient) Alliances(page int) (*alliancesCollectionV2, error) {
-	w := &alliancesCollectionV2{AnonymousClient: c}
+func (c *AnonymousClient) Alliances(page int) (*AlliancesCollectionV2, error) {
+	w := &AlliancesCollectionV2{AnonymousClient: c}
 	url := c.base.CREST + fmt.Sprintf("alliances/?page=%d", page)
 	res, err := c.doJSON("GET", url, nil, w, alliancesCollectionType)
 	if err != nil {
@@ -45,8 +45,8 @@ func (c *AnonymousClient) Alliances(page int) (*alliancesCollectionV2, error) {
 	return w, nil
 }
 
-func (c *alliancesCollectionV2) NextPage() (*alliancesCollectionV2, error) {
-	w := &alliancesCollectionV2{AnonymousClient: c.AnonymousClient}
+func (c *AlliancesCollectionV2) NextPage() (*AlliancesCollectionV2, error) {
+	w := &AlliancesCollectionV2{AnonymousClient: c.AnonymousClient}
 	if c.Next.HRef == "" {
 		return nil, nil
 	}
@@ -58,8 +58,8 @@ func (c *alliancesCollectionV2) NextPage() (*alliancesCollectionV2, error) {
 	return w, nil
 }
 
-func (c *AnonymousClient) Alliance(href string) (*allianceV1, error) {
-	w := &allianceV1{AnonymousClient: c}
+func (c *AnonymousClient) Alliance(href string) (*AllianceV1, error) {
+	w := &AllianceV1{AnonymousClient: c}
 	res, err := c.doJSON("GET", href, nil, w, allianceType)
 	if err != nil {
 		return nil, err
@@ -68,8 +68,8 @@ func (c *AnonymousClient) Alliance(href string) (*allianceV1, error) {
 	return w, nil
 }
 
-func (c *AnonymousClient) AllianceByID(id int64) (*allianceV1, error) {
-	w := &allianceV1{AnonymousClient: c}
+func (c *AnonymousClient) AllianceByID(id int64) (*AllianceV1, error) {
+	w := &AllianceV1{AnonymousClient: c}
 	href := c.base.CREST + fmt.Sprintf("alliances/%d/", id)
 	res, err := c.doJSON("GET", href, nil, w, allianceType)
 	if err != nil {
