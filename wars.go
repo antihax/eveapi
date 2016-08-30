@@ -122,6 +122,7 @@ func (c *AnonymousClient) WarByID(id int) (*warV1, error) {
 	return w, nil
 }
 
+// GetKillmails provides a list of killmails associated to this war.
 func (c *warV1) GetKillmails() (*warKillmailsV1, error) {
 	w := &warKillmailsV1{AnonymousClient: c.AnonymousClient}
 	res, err := c.doJSON("GET", c.Killmails, nil, w, warKillmailsType)
