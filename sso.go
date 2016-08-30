@@ -83,8 +83,8 @@ func createContext(httpClient *http.Client) context.Context {
 }
 
 // TokenToJSON helper function to convert a token to a storable format.
-func TokenToJSON(token *CRESTToken) (string, error) {
-	if d, err := json.Marshal(token); err != nil {
+func (c *CRESTToken) TokenToJSON() (string, error) {
+	if d, err := json.Marshal(c); err != nil {
 		return "", err
 	} else {
 		return string(d), nil

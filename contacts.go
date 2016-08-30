@@ -4,7 +4,7 @@ import "fmt"
 
 const contactCreateType = "application/vnd.ccp.eve.ContactCreate-v1+json"
 
-type ContactCreateV1 struct {
+type contactCreateV1 struct {
 	Standing    float64 `json:"standing,omitempty"`
 	ContactType string  `json:"contactType,omitempty"`
 	Contact     struct {
@@ -17,7 +17,7 @@ type ContactCreateV1 struct {
 
 const contactCollectionType = "application/vnd.ccp.eve.ContactCollection-v1+json"
 
-type ContactCollectionV1 struct {
+type contactCollectionV1 struct {
 	*AuthenticatedClient
 	crestPagedFrame
 	Items []struct {
@@ -35,11 +35,13 @@ type ContactCollectionV1 struct {
 	}
 }
 
+// SetContact sets a contact on the authenticated character.
+// All fields are required.
 func (c *AuthenticatedClient) SetContact(id int64, ref string, standing float64) error {
 	if err := c.validateClient(); err != nil {
 		return err
 	}
-	contact := ContactCreateV1{Standing: standing}
+	contact := contactCreateV1{Standing: standing}
 	contact.Contact.ID = id
 	contact.Contact.Href = ref
 
@@ -56,7 +58,7 @@ func (c *AuthenticatedClient) DeleteContact(id int64, ref string) error {
 	if err := c.validateClient(); err != nil {
 		return err
 	}
-	contact := ContactCreateV1{}
+	contact := contactCreateV1{}
 	contact.Contact.ID = id
 	contact.Contact.Href = ref
 
@@ -70,11 +72,11 @@ func (c *AuthenticatedClient) DeleteContact(id int64, ref string) error {
 	return nil
 }
 
-func (c *AuthenticatedClient) GetContacts() (*ContactCollectionV1, error) {
+func (c *AuthenticatedClient) GetContacts() (*contactCollectionV1, error) {
 	if err := c.validateClient(); err != nil {
 		return nil, err
 	}
-	ret := &ContactCollectionV1{AuthenticatedClient: c}
+	ret := &contactCollectionV1{AuthenticatedClient: c}
 
 	url := fmt.Sprintf(c.base.CREST+"characters/%d/contacts/", c.character.CharacterID)
 
@@ -87,8 +89,8 @@ func (c *AuthenticatedClient) GetContacts() (*ContactCollectionV1, error) {
 	return ret, nil
 }
 
-func (c *ContactCollectionV1) NextPage() (*ContactCollectionV1, error) {
-	w := &ContactCollectionV1{AuthenticatedClient: c.AuthenticatedClient}
+func (c *contactCollectionV1) NextPage() (*contactCollectionV1, error) {
+	w := &contactCollectionV1{AuthenticatedClient: c.AuthenticatedClient}
 	if c.Next.HRef == "" {
 		return nil, nil
 	}

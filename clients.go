@@ -23,7 +23,7 @@ type AnonymousClient struct {
 type AuthenticatedClient struct {
 	AnonymousClient
 	token     *oauth2.Token
-	character *VerifyResponse
+	character *verifyResponse
 }
 
 // ErrorMessage format if a CREST query fails.
@@ -208,7 +208,7 @@ func NewAnonymousClient(client *http.Client) *AnonymousClient {
 	return c
 }
 
-type VerifyResponse struct {
+type verifyResponse struct {
 	CharacterID        int64
 	CharacterName      string
 	ExpiresOn          string
@@ -218,8 +218,8 @@ type VerifyResponse struct {
 }
 
 // Verify the client and collect user information.
-func (c *AuthenticatedClient) Verify() (*VerifyResponse, error) {
-	v := &VerifyResponse{}
+func (c *AuthenticatedClient) Verify() (*verifyResponse, error) {
+	v := &verifyResponse{}
 	_, err := c.doJSON("GET", c.base.Login+"oauth/verify", nil, v, "application/json;")
 	c.character = v
 	if err != nil {
