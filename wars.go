@@ -14,6 +14,18 @@ type WarsCollectionV1 struct {
 	}
 }
 
+const warKillmailsType = "application/vnd.ccp.eve.WarKillmails-v1"
+
+type WarKillmailsV1 struct {
+	*AnonymousClient
+	crestPagedFrame
+
+	Items []struct {
+		HRef string
+		ID   int
+	}
+}
+
 const warType = "application/vnd.ccp.eve.War-v1+json"
 
 type WarV1 struct {
@@ -107,5 +119,16 @@ func (c *AnonymousClient) WarByID(id int) (*WarV1, error) {
 		return nil, err
 	}
 	w.getFrameInfo(res)
+	return w, nil
+}
+
+// GetKillmails provides a list of killmails associated to this war.
+func (c *WarV1) GetKillmails() (*WarKillmailsV1, error) {
+	w := &WarKillmailsV1{AnonymousClient: c.AnonymousClient}
+	res, err := c.doJSON("GET", c.Killmails, nil, w, warKillmailsType)
+	if err != nil {
+		return nil, err
+	}
+	w.getFrameInfo(c.Killmails, res)
 	return w, nil
 }
