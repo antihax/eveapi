@@ -39,3 +39,13 @@ type characterReference struct {
 
 	ID int64 `json:"id"`
 }
+
+// Killmail references
+type itemReference struct {
+	Name string `json:"name"`
+	Href string `json:"href"`
+	Icon struct {
+		Href string `json:"href"`
+	} `json:"icon"`
+	ID int64 `json:"id"`
+}

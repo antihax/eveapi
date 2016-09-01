@@ -91,3 +91,30 @@ func (c *EVEXMLTime) UnmarshalXMLAttr(a xml.Attr) (err error) {
 	c.Time, err = time.Parse(eveXMLTimeLayout, t)
 	return
 }
+
+type EVEKillmailTime struct {
+	time.Time
+}
+
+// Cannot properly Unmarshal CCP's KillmailTime stamps?
+const eveKillmailTimeLayout = "2006.01.02 15:04:05"
+
+func (c *EVEKillmailTime) UnmarshalJSON(b []byte) (err error) {
+	t := string(b)
+	t = strings.Replace(t, `"`, "", -1)
+	c.Time, err = time.Parse(eveKillmailTimeLayout, t)
+	return
+}
+func (c *EVEKillmailTime) UnmarshalXML(d *xml.Decoder, start xml.StartElement) (err error) {
+	var t string
+	d.DecodeElement(&t, &start)
+	t = strings.Replace(t, `"`, "", -1)
+	c.Time, err = time.Parse(eveKillmailTimeLayout, t)
+	return
+}
+func (c *EVEKillmailTime) UnmarshalXMLAttr(a xml.Attr) (err error) {
+	t := a.Value
+	t = strings.Replace(t, `"`, "", -1)
+	c.Time, err = time.Parse(eveKillmailTimeLayout, t)
+	return
+}
