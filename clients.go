@@ -240,3 +240,23 @@ func (c *AuthenticatedClient) validateClient() error {
 	}
 	return nil
 }
+
+func (c *AnonymousClient) GetCRESTURI() string {
+	return c.base.CREST
+}
+
+func (c *AnonymousClient) GetXMLURI() string {
+	return c.base.XML
+}
+
+func (c *AnonymousClient) GetLoginURI() string {
+	return c.base.Login
+}
+
+func (c *AnonymousClient) GetImageURI() string {
+	return c.base.Images
+}
+
+func (c *AnonymousClient) GetManagementURI() string {
+	return c.base.AppManagement
+}

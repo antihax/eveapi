@@ -16,6 +16,7 @@ type KillmailV1 struct {
 		ShipType       itemReference
 		Corporation    itemReference
 		Character      itemReference
+		Alliance       itemReference
 		WeaponType     itemReference
 		FinalBlow      bool
 		SecurityStatus float64
@@ -29,11 +30,13 @@ type KillmailV1 struct {
 			ItemType          itemReference
 			Flag              int64
 			QuantityDestroyed int64
+			QuantityDropped   int64
 		}
 
 		Character   itemReference
 		ShipType    itemReference
 		Corporation itemReference
+		Alliance    itemReference
 		Position    struct {
 			X float64
 			Y float64
