@@ -18,13 +18,15 @@ type crestPagedFrame struct {
 	Next struct {
 		HRef string
 	}
+	Previous struct {
+		HRef string
+	}
 	TotalCount int
 	PageCount  int
 	Page       int
 }
 
 func (c *crestSimpleFrame) getFrameInfo(r *http.Response) error {
-
 	maxAge := strings.Split(r.Header.Get("Cache-Control"), "=")[1]
 	iMaxAge, err := strconv.Atoi(maxAge)
 	if err != nil {
