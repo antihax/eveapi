@@ -1,5 +1,5 @@
 /*
-Package eveapi impliments a CREST and XML api rate limited client for EVE's
+Package eveapi impliments a rate limited CREST and XML api client for EVE's
 public and private APIs.
 
 Caching
@@ -28,6 +28,12 @@ An example using gregjones/httpcache and memcache:
 		// Get our EVE API.
 		eve := eveapi.NewAnonymousClient(client)
 	}
+
+Rate Limiting
+
+The rate limits are per client. If more than one anonymous client per public IP address
+is running, it will be required of the developer to impliment their own rate limits
+on the affected cluster.
 
 Anonymous Client and Public Endpoints
 
