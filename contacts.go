@@ -2,7 +2,7 @@ package eveapi
 
 import "fmt"
 
-const contactCreateType = "application/vnd.ccp.eve.ContactCreate-v1+json"
+const contactCreateType = "application/vnd.ccp.eve.ContactCreate-v1"
 
 type ContactCreateV1 struct {
 	Standing    float64 `json:"standing,omitempty"`
@@ -15,7 +15,7 @@ type ContactCreateV1 struct {
 	Watched bool `json:"watched,omitempty"`
 }
 
-const contactCollectionType = "application/vnd.ccp.eve.ContactCollection-v1+json"
+const contactCollectionType = "application/vnd.ccp.eve.ContactCollection-v1"
 
 type ContactCollectionV1 struct {
 	*AuthenticatedClient

@@ -2,7 +2,7 @@ package eveapi
 
 import "fmt"
 
-const killmailType = "application/vnd.ccp.eve.Killmail-v1+json"
+const killmailType = "application/vnd.ccp.eve.Killmail-v1"
 
 type KillmailV1 struct {
 	*AnonymousClient

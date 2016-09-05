@@ -2,7 +2,7 @@ package eveapi
 
 import "fmt"
 
-const allianceType = "application/vnd.ccp.eve.Alliance-v1+json"
+const allianceType = "application/vnd.ccp.eve.Alliance-v1"
 
 type AllianceV1 struct {
 	*AnonymousClient
@@ -21,7 +21,7 @@ type AllianceV1 struct {
 	Corporations        []entityReference
 }
 
-const alliancesCollectionType = "application/vnd.ccp.eve.AlliancesCollection-v2+json"
+const alliancesCollectionType = "application/vnd.ccp.eve.AlliancesCollection-v2"
 
 type AlliancesCollectionV2 struct {
 	*AnonymousClient

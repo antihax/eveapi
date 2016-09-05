@@ -2,7 +2,7 @@ package eveapi
 
 import "fmt"
 
-const warsCollectionType = "application/vnd.ccp.eve.WarsCollection-v1+json"
+const warsCollectionType = "application/vnd.ccp.eve.WarsCollection-v1"
 
 type WarsCollectionV1 struct {
 	*AnonymousClient
@@ -26,7 +26,7 @@ type WarKillmailsV1 struct {
 	}
 }
 
-const warType = "application/vnd.ccp.eve.War-v1+json"
+const warType = "application/vnd.ccp.eve.War-v1"
 
 type WarV1 struct {
 	*AnonymousClient

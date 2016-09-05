@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	BASE_API_VERSION = "application/vnd.ccp.eve.Api-v5+json"
+	BASE_API_VERSION = "application/vnd.ccp.eve.Api-v5"
 	BASE_MEDIA_TYPE  = "application/json"
 	USER_AGENT       = "https://github.com/antihax/eveapi"
 )
@@ -105,6 +105,7 @@ func (c *EVEKillmailTime) UnmarshalJSON(b []byte) (err error) {
 	c.Time, err = time.Parse(eveKillmailTimeLayout, t)
 	return
 }
+
 func (c *EVEKillmailTime) UnmarshalXML(d *xml.Decoder, start xml.StartElement) (err error) {
 	var t string
 	d.DecodeElement(&t, &start)
@@ -112,6 +113,7 @@ func (c *EVEKillmailTime) UnmarshalXML(d *xml.Decoder, start xml.StartElement) (
 	c.Time, err = time.Parse(eveKillmailTimeLayout, t)
 	return
 }
+
 func (c *EVEKillmailTime) UnmarshalXMLAttr(a xml.Attr) (err error) {
 	t := a.Value
 	t = strings.Replace(t, `"`, "", -1)
