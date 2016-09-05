@@ -41,14 +41,14 @@ Anonymous clients are created simply by supplying a caching HTTP Client.
 Private Clients
 
 Private clients are generated through an SSO Authenticator and Tokens (both Access and Refresh).
+
 They require the application clientID, secretKey, and redirect URL. These must match exactly
 to what was provided to CCP on the Manage Applications page.
 
 	scopes := []string{eveapi.ScopeCharacterContactsRead,
 		eveapi.ScopeCharacterContactsWrite}
 
-	tokenAuthenticator = eveapi.NewSSOAuthenticator(clientID,
-		secretKey,redirectURL,scopes)
+	tokenAuthenticator = eveapi.NewSSOAuthenticator(clientID, secretKey, redirectURL, scopes)
 
 	privateClient := tokenAuthenticator.GetClientFromToken(client, token)
 
@@ -57,12 +57,15 @@ One authenticator can spawn as many clients as needed at once, each with their o
 SSO
 
 Obtaining tokens for client requires two HTTP handlers. One to generate and redirect
-to the SSO URL, and one to receive the response. It is manditory to create a random
-state and compare this state on return to prevent token injection attacks on the application.
+to the SSO URL, and one to receive the response.
+
+It is manditory to create a random state and compare this state on return to prevent token injection attacks on the application.
 
 In the example custom httpHandlers below, SSOAuthenticator, is a created by NewSSOAuthenticator, with scopes.
 
-	func eveSSO(c *appContext.AppContext, w http.ResponseWriter, r *http.Request, s *sessions.Session) (int, error) {
+	func eveSSO(c *appContext.AppContext, w http.ResponseWriter, r *http.Request,
+		s *sessions.Session) (int, error) {
+
 		// Generate a random state string
 		b := make([]byte, 16)
 		rand.Read(b)
@@ -83,7 +86,9 @@ In the example custom httpHandlers below, SSOAuthenticator, is a created by NewS
 		return http.StatusMovedPermanently, nil
 	}
 
-	func eveSSOAnswer(c *appContext.AppContext, w http.ResponseWriter, r *http.Request, s *sessions.Session) (int, error) {
+	func eveSSOAnswer(c *appContext.AppContext, w http.ResponseWriter, r *http.Request,
+		s *sessions.Session) (int, error) {
+
 		// get our code and state
 		code := r.FormValue("code")
 		state := r.FormValue("state")
