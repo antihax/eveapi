@@ -9,13 +9,19 @@ type xmlAPIFrame struct {
 	CachedUntil EVEXMLTime `xml:"cachedUntil"`
 }
 
+// XMLAPIKey holds an API key for the XML API.
+type XMLAPIKey struct {
+	VCode string
+	KeyID int64
+}
+
 // IsValidVCode validates a vCode for the XML API meets basic requirements
-func IsValidVCode(vc string) bool {
-	if m, _ := regexp.MatchString("^[a-zA-Z0-9]+$", vc); !m {
+func (c *XMLAPIKey) IsValidVCode() bool {
+	if m, _ := regexp.MatchString("^[a-zA-Z0-9]+$", c.VCode); !m {
 		return false
 	}
 
-	if len(vc) != 64 {
+	if len(c.VCode) != 64 {
 		return false
 	}
 

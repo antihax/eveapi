@@ -1,6 +1,6 @@
 # eveapi
 
-[![GoDoc](https://godoc.org/github.com/antihax/eveapi?status.svg)](https://godoc.org/github.com/antihax/eveapi)]
+[![GoDoc](https://godoc.org/github.com/antihax/eveapi?status.svg)](https://godoc.org/github.com/antihax/eveapi)
 
 golang eve API and CREST module
 

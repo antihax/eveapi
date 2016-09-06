@@ -9,7 +9,8 @@ import (
 )
 
 type crestSimpleFrame struct {
-	CacheUntil time.Time
+	URL        string    // request URI for bookmarking purposes.
+	CacheUntil time.Time // reponse cache time
 }
 
 type crestPagedFrame struct {
@@ -26,35 +27,47 @@ type crestPagedFrame struct {
 	Page       int
 }
 
+// getFrameInfo adds our own information to the responses.
 func (c *crestSimpleFrame) getFrameInfo(r *http.Response) error {
+	// Save the URL for bookmarking purposes.
+	c.URL = r.Request.URL.String()
+
+	// Determine the cache duration.
 	maxAge := strings.Split(r.Header.Get("Cache-Control"), "=")[1]
 	iMaxAge, err := strconv.Atoi(maxAge)
 	if err != nil {
 		return err
 	}
-
+	// Get the response date.
 	date, err := time.Parse(time.RFC1123, r.Header.Get("Date"))
 	if err != nil {
 		return err
 	}
 
+	// Add the cache duration
 	c.CacheUntil = date.Add(time.Duration(iMaxAge) * time.Second)
 
 	return nil
 }
 
+// getFrameInfo adds additional information on paged frames.
 func (c *crestPagedFrame) getFrameInfo(url string, r *http.Response) error {
+	// Apply the same procedure as the simple frame.
 	if err := c.crestSimpleFrame.getFrameInfo(r); err != nil {
 		return err
 	}
+
+	// Extract any page numbers.
 	page, err := getPageNumberFromURL(url)
 	if err != nil {
 		return err
 	}
 	c.Page = page
+
 	return nil
 }
 
+// Extract page numbers from the URL.
 func getPageNumberFromURL(s string) (int, error) {
 	u, err := url.Parse(s)
 	if err != nil {
