@@ -84,7 +84,7 @@ func (c *AnonymousClient) doXML(method, urlStr string, body interface{}, v inter
 	if err != nil {
 		return nil, err
 	}
-	<-xmlThrottle // Throttle XML requests
+	xmlThrottle.throttleRequest() // Throttle XML requests
 	res, err := c.executeRequest(req)
 	if err != nil {
 		return nil, err
@@ -106,8 +106,8 @@ func (c *AnonymousClient) doJSON(method, urlStr string, body interface{}, v inte
 	if err != nil {
 		return nil, err
 	}
-	<-anonThrottle              // Throttle Anonymous CREST requests
-	anonConnectionLimit <- true // Limit concurrent requests
+	anonThrottle.throttleRequest() // Throttle Anonymous CREST requests
+	anonConnectionLimit <- true    // Limit concurrent requests
 	res, err := c.executeRequest(req)
 	<-anonConnectionLimit
 
@@ -139,7 +139,7 @@ func (c *AuthenticatedClient) doJSON(method, urlStr string, body interface{}, v 
 		return nil, err
 	}
 
-	<-authedThrottle // Throttle Authenticated CREST requests
+	authedThrottle.throttleRequest() // Throttle Authenticated CREST requests
 
 	res, err := c.executeRequest(req)
 	if err != nil {

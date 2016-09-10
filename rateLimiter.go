@@ -2,54 +2,64 @@ package eveapi
 
 import "time"
 
-// CCP's documentation states rate limits are tracked by IP address.
-// The throttles provide a burstable rate limit to each component of the API.
+type rateLimiter struct {
+	throttle  chan time.Time
+	rate      time.Duration
+	ticker    *time.Ticker
+	burstRate int
+}
 
-// Authenticated SSO Throttle
-var authedThrottle = make(chan time.Time, 20) // Burst 20
+func newRateLimiter(requestsPerSecond int, burstRate int) *rateLimiter {
+	c := &rateLimiter{
+		throttle:  make(chan time.Time, burstRate),
+		rate:      time.Second / (time.Duration)(requestsPerSecond),
+		burstRate: burstRate,
+	}
+	c.startRatelimiter()
+	return c
+}
 
-// Anonymous CREST Throttle
-var anonThrottle = make(chan time.Time, 300) // Burst 300
+func (c *rateLimiter) startRatelimiter() {
+	// Create the timed limiter
+	c.ticker = time.NewTicker(c.rate)
+
+	// Fill the buffer with the burst tokens
+	for i := 0; i < c.burstRate; i++ {
+		c.throttle <- time.Now()
+	}
+
+	// Start the rate limiter
+	go c.tick()
+}
+
+func (c *rateLimiter) tick() {
+	for t := range c.ticker.C {
+		select {
+		case c.throttle <- t:
+		default:
+		}
+	}
+}
+
+func (c *rateLimiter) stop() {
+	c.ticker.Stop()
+}
+
+func (c *rateLimiter) throttleRequest() {
+	<-c.throttle
+}
+
+// Prevent going over 20 connections on anonymous clients
 var anonConnectionLimit = make(chan bool, 20)
 
-// XML client Throttle
-var xmlThrottle = make(chan time.Time, 30) // Burst 30
+// CCP's documentation states rate limits are tracked by IP address.
+// The throttles provide a burstable rate limit to each component of the API.
+var authedThrottle *rateLimiter
+var anonThrottle *rateLimiter
+var xmlThrottle *rateLimiter
 
 func init() {
-	// Authenticated SSO client rate limit
-	var authedRate = time.Second / 20
-	var authedTick = time.NewTicker(authedRate)
-
-	go func() {
-		for t := range authedTick.C {
-			select {
-			case authedThrottle <- t:
-			default:
-			}
-		}
-	}()
-
-	// Anonymous CREST client rate limit
-	var anonRate = time.Second / 150
-	var anonTick = time.NewTicker(anonRate)
-	go func() {
-		for t := range anonTick.C {
-			select {
-			case anonThrottle <- t:
-			default:
-			}
-		}
-	}()
-
-	// XML client rate limit
-	var xmlRate = time.Second / 30
-	var xmlTick = time.NewTicker(xmlRate)
-	go func() {
-		for t := range xmlTick.C {
-			select {
-			case xmlThrottle <- t:
-			default:
-			}
-		}
-	}()
+	authedThrottle = newRateLimiter(20, 20)
+	anonThrottle = newRateLimiter(150, 300)
+	xmlThrottle = newRateLimiter(30, 30)
 }
