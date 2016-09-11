@@ -34,6 +34,7 @@ type ErrorMessage struct {
 // Executes a request generated with newRequest
 func (c *AnonymousClient) executeRequest(req *http.Request) (*http.Response, error) {
 	res, err := c.httpClient.Do(req)
+
 	if err != nil {
 		return nil, err
 	}
@@ -84,8 +85,10 @@ func (c *AnonymousClient) doXML(method, urlStr string, body interface{}, v inter
 	if err != nil {
 		return nil, err
 	}
-	xmlThrottle.throttleRequest() // Throttle XML requests
+	xmlThrottle.throttleRequest()  // Throttle XML requests
+	connectionLimit.startRequest() // Limit concurrent requests
 	res, err := c.executeRequest(req)
+	connectionLimit.endRequest()
 	if err != nil {
 		return nil, err
 	}
@@ -107,9 +110,9 @@ func (c *AnonymousClient) doJSON(method, urlStr string, body interface{}, v inte
 		return nil, err
 	}
 	anonThrottle.throttleRequest() // Throttle Anonymous CREST requests
-	anonConnectionLimit <- true    // Limit concurrent requests
+	connectionLimit.startRequest() // Limit concurrent requests
 	res, err := c.executeRequest(req)
-	<-anonConnectionLimit
+	connectionLimit.endRequest()
 
 	if err != nil {
 		return nil, err
@@ -139,7 +142,9 @@ func (c *AuthenticatedClient) doJSON(method, urlStr string, body interface{}, v 
 		return nil, err
 	}
 
+	connectionLimit.startRequest()   // Limit concurrent requests
 	authedThrottle.throttleRequest() // Throttle Authenticated CREST requests
+	connectionLimit.endRequest()
 
 	res, err := c.executeRequest(req)
 	if err != nil {

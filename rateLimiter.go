@@ -1,6 +1,9 @@
 package eveapi
 
-import "time"
+import (
+	"sync/atomic"
+	"time"
+)
 
 type rateLimiter struct {
 	throttle  chan time.Time
@@ -49,8 +52,31 @@ func (c *rateLimiter) throttleRequest() {
 	<-c.throttle
 }
 
-// Prevent going over 20 connections on anonymous clients
-var anonConnectionLimit = make(chan bool, 20)
+type concurrencyLimiter struct {
+	concurrencyLimiter chan bool
+	openRequests       uint64
+}
+
+func newConcurrencyLimiter(limit int) *concurrencyLimiter {
+	c := &concurrencyLimiter{make(chan bool, limit), 0}
+	return c
+}
+
+func (c *concurrencyLimiter) startRequest() {
+	c.concurrencyLimiter <- true
+	atomic.AddUint64(&c.openRequests, 1)
+}
+
+func (c *concurrencyLimiter) endRequest() {
+	<-c.concurrencyLimiter
+	atomic.AddUint64(&c.openRequests, ^uint64(0))
+}
+
+func (c *concurrencyLimiter) getOpenRequests() uint64 {
+	return atomic.LoadUint64(&c.openRequests)
+}
+
+var connectionLimit *concurrencyLimiter
 
 // CCP's documentation states rate limits are tracked by IP address.
 // The throttles provide a burstable rate limit to each component of the API.
@@ -59,7 +85,11 @@ var anonThrottle *rateLimiter
 var xmlThrottle *rateLimiter
 
 func init() {
+	// Rate limits
 	authedThrottle = newRateLimiter(20, 20)
 	anonThrottle = newRateLimiter(150, 300)
 	xmlThrottle = newRateLimiter(30, 30)
+
+	// Prevent going over 20 concurrent requests
+	connectionLimit = newConcurrencyLimiter(20)
 }
