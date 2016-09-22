@@ -86,8 +86,8 @@ var xmlThrottle *rateLimiter
 
 func init() {
 	// Rate limits
-	authedThrottle = newRateLimiter(20, 20)
-	anonThrottle = newRateLimiter(150, 300)
+	authedThrottle = newRateLimiter(20, 100)
+	anonThrottle = newRateLimiter(150, 400)
 	xmlThrottle = newRateLimiter(30, 30)
 
 	// Prevent going over 20 concurrent requests
