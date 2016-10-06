@@ -19,33 +19,39 @@ type imageList struct {
 
 // Corporation or alliance in most structures.
 type entityReference struct {
+	idHref
 	Name  string    `json:"name"`
 	IsNPC bool      `json:"isNPC"`
-	Href  string    `json:"href"`
 	Logo  imageList `json:"logo"`
-	ID    int64     `json:"id"`
 }
 
 type characterReference struct {
+	idHref
 	Name        string          `json:"name"`
 	Corporation entityReference `json:"corporation,omitempty"`
 	Alliance    entityReference `json:"alliance,omitempty"`
 	IsNPC       bool            `json:"isNPC"`
-	Href        string          `json:"href"`
 	Capsuleer   struct {
 		Href string
 	}
 	Portrait imageList `json:"portrait"`
-
-	ID int64 `json:"id"`
 }
 
 // Killmail references
 type itemReference struct {
+	idHref
 	Name string `json:"name"`
-	Href string `json:"href"`
 	Icon struct {
 		Href string `json:"href"`
 	} `json:"icon"`
-	ID int64 `json:"id"`
+}
+
+type simpleHref struct {
+	Href string `json:"href"`
+}
+
+// ID & Href references
+type idHref struct {
+	Href string `json:"href"`
+	ID   int64  `json:"id"`
 }

@@ -2,25 +2,6 @@ package eveapi
 
 import "fmt"
 
-const allianceType = "application/vnd.ccp.eve.Alliance-v1"
-
-type AllianceV1 struct {
-	*AnonymousClient
-	crestSimpleFrame
-	StartDate           EVETime
-	CorporationsCount   int64
-	Description         string
-	ExecutorCorporation entityReference
-	CreatorCorporation  entityReference
-	URL                 string
-	ID                  int64
-	Name                string
-	ShortName           string
-	Deleted             bool
-	CreatorCharacter    characterReference
-	Corporations        []entityReference
-}
-
 const alliancesCollectionType = "application/vnd.ccp.eve.AlliancesCollection-v2"
 
 type AlliancesCollectionV2 struct {
@@ -58,6 +39,25 @@ func (c *AlliancesCollectionV2) NextPage() (*AlliancesCollectionV2, error) {
 	return w, nil
 }
 
+const allianceType = "application/vnd.ccp.eve.Alliance-v1"
+
+type AllianceV1 struct {
+	*AnonymousClient
+	crestSimpleFrame
+	StartDate           EVETime
+	CorporationsCount   int64
+	Description         string
+	ExecutorCorporation entityReference
+	CreatorCorporation  entityReference
+	URL                 string
+	ID                  int64
+	Name                string
+	ShortName           string
+	Deleted             bool
+	CreatorCharacter    characterReference
+	Corporations        []entityReference
+}
+
 func (c *AnonymousClient) Alliance(href string) (*AllianceV1, error) {
 	w := &AllianceV1{AnonymousClient: c}
 	res, err := c.doJSON("GET", href, nil, w, allianceType)
@@ -69,12 +69,6 @@ func (c *AnonymousClient) Alliance(href string) (*AllianceV1, error) {
 }
 
 func (c *AnonymousClient) AllianceByID(id int64) (*AllianceV1, error) {
-	w := &AllianceV1{AnonymousClient: c}
 	href := c.base.CREST + fmt.Sprintf("alliances/%d/", id)
-	res, err := c.doJSON("GET", href, nil, w, allianceType)
-	if err != nil {
-		return nil, err
-	}
-	w.getFrameInfo(res)
-	return w, nil
+	return c.Alliance(href)
 }
