@@ -2,7 +2,7 @@ package eveapi
 
 import "fmt"
 
-const loyaltyStoreOffersCollectionType = "application/vnd.ccp.eve.LoyaltyStoreOffersCollection-v1"
+const loyaltyStoreOffersCollectionV1Type = "application/vnd.ccp.eve.LoyaltyStoreOffersCollection-v1"
 
 type LoyaltyStoreOffersCollectionV1 struct {
 	*AnonymousClient
@@ -22,15 +22,10 @@ type LoyaltyStoreOffersCollectionV1 struct {
 	}
 }
 
-func (c *AnonymousClient) LoyaltyPointStoreByID(corporationID int64) (*LoyaltyStoreOffersCollectionV1, error) {
-	url := fmt.Sprintf(c.base.CREST+"corporations/%d/loyaltystore/", corporationID)
-	return c.LoyaltyPointStore(url)
-}
-
-func (c *AnonymousClient) LoyaltyPointStore(url string) (*LoyaltyStoreOffersCollectionV1, error) {
+func (c *AnonymousClient) LoyaltyPointStoreV1(url string) (*LoyaltyStoreOffersCollectionV1, error) {
 	ret := &LoyaltyStoreOffersCollectionV1{AnonymousClient: c}
 
-	res, err := c.doJSON("GET", url, nil, ret, loyaltyStoreOffersCollectionType)
+	res, err := c.doJSON("GET", url, nil, ret, loyaltyStoreOffersCollectionV1Type)
 	if err != nil {
 		return nil, err
 	}
@@ -39,13 +34,18 @@ func (c *AnonymousClient) LoyaltyPointStore(url string) (*LoyaltyStoreOffersColl
 	return ret, nil
 }
 
+func (c *AnonymousClient) LoyaltyPointStoreV1ByID(corporationID int64) (*LoyaltyStoreOffersCollectionV1, error) {
+	url := fmt.Sprintf(c.base.CREST+"corporations/%d/loyaltystore/", corporationID)
+	return c.LoyaltyPointStoreV1(url)
+}
+
 func (c *LoyaltyStoreOffersCollectionV1) NextPage() (*LoyaltyStoreOffersCollectionV1, error) {
 	w := &LoyaltyStoreOffersCollectionV1{AnonymousClient: c.AnonymousClient}
 	if c.Next.HRef == "" {
 		return nil, nil
 	}
 
-	res, err := c.doJSON("GET", c.Next.HRef, nil, w, loyaltyStoreOffersCollectionType)
+	res, err := c.doJSON("GET", c.Next.HRef, nil, w, loyaltyStoreOffersCollectionV1Type)
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +58,7 @@ func (c *LoyaltyStoreOffersCollectionV1) PreviousPage() (*LoyaltyStoreOffersColl
 	if c.Previous.HRef == "" {
 		return nil, nil
 	}
-	res, err := c.doJSON("GET", c.Previous.HRef, nil, w, loyaltyStoreOffersCollectionType)
+	res, err := c.doJSON("GET", c.Previous.HRef, nil, w, loyaltyStoreOffersCollectionV1Type)
 	if err != nil {
 		return nil, err
 	}

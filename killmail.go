@@ -9,34 +9,7 @@ import (
 	"time"
 )
 
-// Generate the killmail hash using source information.
-func GenerateKillMailHash(victimID int64, attackerID int64, shipTypeID int64, killTime time.Time) string {
-	v := strconv.FormatInt(victimID, 10)
-	if victimID == 0 {
-		v = "None"
-	}
-	a := strconv.FormatInt(attackerID, 10)
-	if attackerID == 0 {
-		a = "None"
-	}
-	s := strconv.FormatInt(shipTypeID, 10)
-
-	t := strconv.FormatInt(convertTimeToWindow64(killTime), 10)
-
-	h := sha1.New()
-	io.WriteString(h, v)
-	io.WriteString(h, a)
-	io.WriteString(h, s)
-	io.WriteString(h, t)
-	return fmt.Sprintf("%x", h.Sum(nil))
-}
-
-// Convert to killmail time for hashing.
-func convertTimeToWindow64(t time.Time) int64 {
-	return t.Unix()*10000000 + 116444736000000000
-}
-
-const killmailType = "application/vnd.ccp.eve.Killmail-v1"
+const killmailV1Type = "application/vnd.ccp.eve.Killmail-v1"
 
 type KillmailV1 struct {
 	*AnonymousClient
@@ -84,9 +57,9 @@ type KillmailV1 struct {
 }
 
 // Killmail pulls killmail information
-func (c *AnonymousClient) Killmail(href string) (*KillmailV1, error) {
+func (c *AnonymousClient) KillmailV1(href string) (*KillmailV1, error) {
 	w := &KillmailV1{AnonymousClient: c}
-	res, err := c.doJSON("GET", href, nil, w, warType)
+	res, err := c.doJSON("GET", href, nil, w, killmailV1Type)
 	if err != nil {
 		return nil, err
 	}
@@ -95,15 +68,15 @@ func (c *AnonymousClient) Killmail(href string) (*KillmailV1, error) {
 	w.getFrameInfo(res)
 
 	// Add the hash to the structure, pull it from the URL
-	w.Hash = strings.Split(w.URL, "/")[5]
+	w.Hash = strings.Split(w.PageURL, "/")[5]
 	return w, nil
 }
 
 // KillmailByID requires the killmail ID and hash string for validation and collects the killmail.
-func (c *AnonymousClient) KillmailByID(id int, hash string) (*KillmailV1, error) {
+func (c *AnonymousClient) KillmailV1ByID(id int, hash string) (*KillmailV1, error) {
 	w := &KillmailV1{AnonymousClient: c}
 	url := c.base.CREST + fmt.Sprintf("killmails/%d/%s/", id, hash)
-	res, err := c.doJSON("GET", url, nil, w, warType)
+	res, err := c.doJSON("GET", url, nil, w, killmailV1Type)
 	if err != nil {
 		return nil, err
 	}
@@ -111,4 +84,49 @@ func (c *AnonymousClient) KillmailByID(id int, hash string) (*KillmailV1, error)
 	w.Hash = hash
 	w.getFrameInfo(res)
 	return w, nil
+}
+
+/*
+// [TODO]
+type KillMailsXML struct {
+	xmlAPIFrame
+}
+
+func (c *AuthenticatedClient) KillMailsXML(characterID int64) (*KillMailsXML, error) {
+	w := &KillMailsXML{}
+
+	url := c.base.XML + fmt.Sprintf("char/KillMails.xml.aspx?characterID=%d", characterID)
+	_, err := c.doXML("GET", url, nil, w)
+	if err != nil {
+		return nil, err
+	}
+	return w, nil
+}
+*/
+
+// Generate the killmail hash using source information.
+func GenerateKillMailHash(victimID int64, attackerID int64, shipTypeID int64, killTime time.Time) string {
+	v := strconv.FormatInt(victimID, 10)
+	if victimID == 0 {
+		v = "None"
+	}
+	a := strconv.FormatInt(attackerID, 10)
+	if attackerID == 0 {
+		a = "None"
+	}
+	s := strconv.FormatInt(shipTypeID, 10)
+
+	t := strconv.FormatInt(convertTimeToWindow64(killTime), 10)
+
+	h := sha1.New()
+	io.WriteString(h, v)
+	io.WriteString(h, a)
+	io.WriteString(h, s)
+	io.WriteString(h, t)
+	return fmt.Sprintf("%x", h.Sum(nil))
+}
+
+// Convert to killmail time for hashing.
+func convertTimeToWindow64(t time.Time) int64 {
+	return t.Unix()*10000000 + 116444736000000000
 }

@@ -9,7 +9,7 @@ import (
 )
 
 type crestSimpleFrame struct {
-	URL        string    // request URI for bookmarking purposes.
+	PageURL    string    // request URI for bookmarking purposes.
 	CacheUntil time.Time // reponse cache time
 }
 
@@ -30,7 +30,7 @@ type crestPagedFrame struct {
 // getFrameInfo adds our own information to the responses.
 func (c *crestSimpleFrame) getFrameInfo(r *http.Response) error {
 	// Save the URL for bookmarking purposes.
-	c.URL = r.Request.URL.String()
+	c.PageURL = r.Request.URL.String()
 
 	// Determine the cache duration.
 	maxAge := strings.Split(r.Header.Get("Cache-Control"), "=")[1]

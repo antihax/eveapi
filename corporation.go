@@ -3,7 +3,7 @@ package eveapi
 import "fmt"
 
 // CharacterInfo returned data from XML API
-type CorporationSheet struct {
+type CorporationSheetXML struct {
 	xmlAPIFrame
 	CorporationID   int64  `xml:"result>corporationID"`
 	CorporationName string `xml:"result>corporationName"`
@@ -31,8 +31,8 @@ type CorporationSheet struct {
 }
 
 // GetCharacterInfo queries the XML API for a given characterID.
-func (c *AnonymousClient) GetCorporationPublicSheet(corporationID int64) (*CorporationSheet, error) {
-	w := &CorporationSheet{}
+func (c *AnonymousClient) CorporationPublicSheetXML(corporationID int64) (*CorporationSheetXML, error) {
+	w := &CorporationSheetXML{}
 
 	url := c.base.XML + fmt.Sprintf("corp/CorporationSheet.xml.aspx?corporationID=%d", corporationID)
 	_, err := c.doXML("GET", url, nil, w)

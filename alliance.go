@@ -2,7 +2,7 @@ package eveapi
 
 import "fmt"
 
-const alliancesCollectionType = "application/vnd.ccp.eve.AlliancesCollection-v2"
+const alliancesCollectionV2Type = "application/vnd.ccp.eve.AlliancesCollection-v2"
 
 type AlliancesCollectionV2 struct {
 	*AnonymousClient
@@ -15,10 +15,10 @@ type AlliancesCollectionV2 struct {
 	}
 }
 
-func (c *AnonymousClient) Alliances(page int) (*AlliancesCollectionV2, error) {
+func (c *AnonymousClient) AlliancesV2(page int) (*AlliancesCollectionV2, error) {
 	w := &AlliancesCollectionV2{AnonymousClient: c}
 	url := c.base.CREST + fmt.Sprintf("alliances/?page=%d", page)
-	res, err := c.doJSON("GET", url, nil, w, alliancesCollectionType)
+	res, err := c.doJSON("GET", url, nil, w, alliancesCollectionV2Type)
 	if err != nil {
 		return nil, err
 	}
@@ -31,7 +31,7 @@ func (c *AlliancesCollectionV2) NextPage() (*AlliancesCollectionV2, error) {
 	if c.Next.HRef == "" {
 		return nil, nil
 	}
-	res, err := c.doJSON("GET", c.Next.HRef, nil, w, alliancesCollectionType)
+	res, err := c.doJSON("GET", c.Next.HRef, nil, w, alliancesCollectionV2Type)
 	if err != nil {
 		return nil, err
 	}
@@ -39,7 +39,7 @@ func (c *AlliancesCollectionV2) NextPage() (*AlliancesCollectionV2, error) {
 	return w, nil
 }
 
-const allianceType = "application/vnd.ccp.eve.Alliance-v1"
+const allianceV1Type = "application/vnd.ccp.eve.Alliance-v1"
 
 type AllianceV1 struct {
 	*AnonymousClient
@@ -60,7 +60,7 @@ type AllianceV1 struct {
 
 func (c *AnonymousClient) Alliance(href string) (*AllianceV1, error) {
 	w := &AllianceV1{AnonymousClient: c}
-	res, err := c.doJSON("GET", href, nil, w, allianceType)
+	res, err := c.doJSON("GET", href, nil, w, allianceV1Type)
 	if err != nil {
 		return nil, err
 	}

@@ -10,7 +10,7 @@ import (
 func TestKillmail(t *testing.T) {
 	client := &http.Client{}
 	r := NewAnonymousClient(client)
-	c, err := r.KillmailByID(40583728, "efd4bf9c4f2aee704d3f9a7f8ae0176a15eba19d")
+	c, err := r.KillmailV1ByID(40583728, "efd4bf9c4f2aee704d3f9a7f8ae0176a15eba19d")
 	if err != nil {
 		t.Errorf("Error getting killmail %v", err)
 	}
@@ -19,7 +19,7 @@ func TestKillmail(t *testing.T) {
 		t.Errorf("Hash does not match the request")
 	}
 
-	c, err = r.Killmail("https://crest-tq.eveonline.com/killmails/40583728/efd4bf9c4f2aee704d3f9a7f8ae0176a15eba19d/")
+	c, err = r.KillmailV1("https://crest-tq.eveonline.com/killmails/40583728/efd4bf9c4f2aee704d3f9a7f8ae0176a15eba19d/")
 	if err != nil {
 		t.Errorf("Error getting killmail %v", err)
 	}

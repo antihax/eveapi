@@ -2,7 +2,7 @@ package eveapi
 
 import "fmt"
 
-const npcCorporationsCollectionType = "application/vnd.ccp.eve.NPCCorporationsCollection-v1"
+const npcCorporationsCollectionV1Type = "application/vnd.ccp.eve.NPCCorporationsCollection-v1"
 
 type NPCCorporationsCollectionV1 struct {
 	*AnonymousClient
@@ -19,11 +19,11 @@ type NPCCorporationsCollectionV1 struct {
 	}
 }
 
-func (c *AnonymousClient) NPCCorporations(page int64) (*NPCCorporationsCollectionV1, error) {
+func (c *AnonymousClient) NPCCorporationsV1(page int64) (*NPCCorporationsCollectionV1, error) {
 	ret := &NPCCorporationsCollectionV1{AnonymousClient: c}
 	url := c.base.CREST + fmt.Sprintf("corporations/npccorps/?page=%d", page)
 
-	res, err := c.doJSON("GET", url, nil, ret, npcCorporationsCollectionType)
+	res, err := c.doJSON("GET", url, nil, ret, npcCorporationsCollectionV1Type)
 	if err != nil {
 		return nil, err
 	}
@@ -37,7 +37,7 @@ func (c *NPCCorporationsCollectionV1) NextPage() (*NPCCorporationsCollectionV1, 
 	if c.Next.HRef == "" {
 		return nil, nil
 	}
-	res, err := c.doJSON("GET", c.Next.HRef, nil, w, npcCorporationsCollectionType)
+	res, err := c.doJSON("GET", c.Next.HRef, nil, w, npcCorporationsCollectionV1Type)
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +50,7 @@ func (c *NPCCorporationsCollectionV1) PreviousPage() (*NPCCorporationsCollection
 	if c.Previous.HRef == "" {
 		return nil, nil
 	}
-	res, err := c.doJSON("GET", c.Previous.HRef, nil, w, npcCorporationsCollectionType)
+	res, err := c.doJSON("GET", c.Previous.HRef, nil, w, npcCorporationsCollectionV1Type)
 	if err != nil {
 		return nil, err
 	}

@@ -2,7 +2,7 @@ package eveapi
 
 import "fmt"
 
-const warsCollectionType = "application/vnd.ccp.eve.WarsCollection-v1"
+const warsCollectionV1Type = "application/vnd.ccp.eve.WarsCollection-v1"
 
 type WarsCollectionV1 struct {
 	*AnonymousClient
@@ -14,7 +14,7 @@ type WarsCollectionV1 struct {
 	}
 }
 
-const warKillmailsType = "application/vnd.ccp.eve.WarKillmails-v1"
+const warKillmailsV1Type = "application/vnd.ccp.eve.WarKillmails-v1"
 
 type WarKillmailsV1 struct {
 	*AnonymousClient
@@ -26,7 +26,7 @@ type WarKillmailsV1 struct {
 	}
 }
 
-const warType = "application/vnd.ccp.eve.War-v1"
+const warV1Type = "application/vnd.ccp.eve.War-v1"
 
 type WarV1 struct {
 	*AnonymousClient
@@ -77,10 +77,10 @@ type WarV1 struct {
 	ID int64
 }
 
-func (c *AnonymousClient) Wars(page int) (*WarsCollectionV1, error) {
+func (c *AnonymousClient) WarsV1(page int) (*WarsCollectionV1, error) {
 	w := &WarsCollectionV1{AnonymousClient: c}
 	url := c.base.CREST + fmt.Sprintf("wars/?page=%d", page)
-	res, err := c.doJSON("GET", url, nil, w, warsCollectionType)
+	res, err := c.doJSON("GET", url, nil, w, warsCollectionV1Type)
 	if err != nil {
 		return nil, err
 	}
@@ -93,7 +93,7 @@ func (c *WarsCollectionV1) NextPage() (*WarsCollectionV1, error) {
 	if c.Next.HRef == "" {
 		return nil, nil
 	}
-	res, err := c.doJSON("GET", c.Next.HRef, nil, w, warsCollectionType)
+	res, err := c.doJSON("GET", c.Next.HRef, nil, w, warsCollectionV1Type)
 	if err != nil {
 		return nil, err
 	}
@@ -101,9 +101,9 @@ func (c *WarsCollectionV1) NextPage() (*WarsCollectionV1, error) {
 	return w, nil
 }
 
-func (c *AnonymousClient) War(href string) (*WarV1, error) {
+func (c *AnonymousClient) WarV1(href string) (*WarV1, error) {
 	w := &WarV1{AnonymousClient: c}
-	res, err := c.doJSON("GET", href, nil, w, warType)
+	res, err := c.doJSON("GET", href, nil, w, warV1Type)
 	if err != nil {
 		return nil, err
 	}
@@ -112,20 +112,14 @@ func (c *AnonymousClient) War(href string) (*WarV1, error) {
 }
 
 func (c *AnonymousClient) WarByID(id int) (*WarV1, error) {
-	w := &WarV1{AnonymousClient: c}
 	url := c.base.CREST + fmt.Sprintf("wars/%d/", id)
-	res, err := c.doJSON("GET", url, nil, w, warType)
-	if err != nil {
-		return nil, err
-	}
-	w.getFrameInfo(res)
-	return w, nil
+	return c.WarV1(url)
 }
 
 // GetKillmails provides a list of killmails associated to this war.
-func (c *WarV1) GetKillmails() (*WarKillmailsV1, error) {
+func (c *WarV1) KillmailsV1() (*WarKillmailsV1, error) {
 	w := &WarKillmailsV1{AnonymousClient: c.AnonymousClient}
-	res, err := c.doJSON("GET", c.Killmails, nil, w, warKillmailsType)
+	res, err := c.doJSON("GET", c.Killmails, nil, w, warKillmailsV1Type)
 	if err != nil {
 		return nil, err
 	}

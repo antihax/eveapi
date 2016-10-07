@@ -8,7 +8,7 @@ import (
 func TestCharacter(t *testing.T) {
 	client := &http.Client{}
 	r := NewAnonymousClient(client)
-	c, err := r.CharacterByID(1331768660)
+	c, err := r.CharacterV4ByID(1331768660)
 	if err != nil {
 		t.Errorf("Error getting character %v", err)
 	}
