@@ -22,8 +22,8 @@ type AnonymousClient struct {
 // AuthenticatedClient for Private CREST and Private XML API queries. SSO Authenticated.
 type AuthenticatedClient struct {
 	AnonymousClient
-	token     *oauth2.Token
-	character *VerifyResponse
+	tokenSource oauth2.TokenSource
+	character   *VerifyResponse
 }
 
 // ErrorMessage format if a CREST query fails.
@@ -38,7 +38,14 @@ func (c *AnonymousClient) executeRequest(req *http.Request) (*http.Response, err
 	if err != nil {
 		return nil, err
 	}
-	return res, nil
+	if res.StatusCode == http.StatusOK ||
+		res.StatusCode == http.StatusCreated ||
+		res.StatusCode == http.StatusCreated {
+		return res, nil
+	} else {
+		return res, errors.New(res.Status)
+	}
+
 }
 
 // Creates a new http.Request for a public resource.
@@ -75,7 +82,6 @@ func (c *AuthenticatedClient) newRequest(method, urlStr string, body interface{}
 		return nil, err
 	}
 
-	c.token.SetAuthHeader(req)
 	return req, nil
 }
 

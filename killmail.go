@@ -1,7 +1,9 @@
 package eveapi
 
 import (
+	"bytes"
 	"crypto/sha1"
+	"encoding/xml"
 	"fmt"
 	"io"
 	"strconv"
@@ -86,23 +88,150 @@ func (c *AnonymousClient) KillmailV1ByID(id int, hash string) (*KillmailV1, erro
 	return w, nil
 }
 
-/*
-// [TODO]
-type KillMailsXML struct {
-	xmlAPIFrame
+type attacker struct {
+	AllianceID      int64   `xml:"allianceID,attr"`
+	AllianceName    string  `xml:"allianceName,attr"`
+	CharacterID     int64   `xml:"characterID,attr"`
+	CharacterName   string  `xml:"characterName,attr"`
+	CorporationID   int64   `xml:"corporationID,attr"`
+	CorporationName string  `xml:"corporationName,attr"`
+	DamageDone      int64   `xml:"damageDone,attr"`
+	FactionID       int64   `xml:"factionID,attr"`
+	FactionName     string  `xml:"factionName,attr"`
+	FinalBlow       bool    `xml:"finalBlow,attr"`
+	SecurityStatus  float64 `xml:"securityStatus,attr"`
+	ShipTypeID      int64   `xml:"shipTypeID,attr"`
+	WeaponTypeID    int64   `xml:"weaponTypeID,attr"`
 }
 
-func (c *AuthenticatedClient) KillMailsXML(characterID int64) (*KillMailsXML, error) {
-	w := &KillMailsXML{}
+type item struct {
+	QtyDestroyed int64 `xml:"qtyDestroyed,attr"`
+	QtyDropped   int64 `xml:"qtyDropped,attr"`
+	TypeID       int64 `xml:"typeID,attr"`
+	Flag         int64 `xml:"flag,attr"`
+	Singleton    int64 `xml:"singleton,attr"`
+}
 
-	url := c.base.XML + fmt.Sprintf("char/KillMails.xml.aspx?characterID=%d", characterID)
-	_, err := c.doXML("GET", url, nil, w)
+type KillMailsXML struct {
+	xmlAPIFrame
+
+	Kills []struct {
+		// Generic kill information
+		KillID        int64 `xml:"killID,attr"`
+		Hash          string
+		SolarSystemID int64      `xml:"solarSystemID,attr"`
+		MoonID        int64      `xml:"moonID,attr"`
+		KillTime      EVEXMLTime `xml:"killTime,attr"`
+
+		// Victim Information
+		Victim struct {
+			AllianceID      int64   `xml:"allianceID,attr"`
+			AllianceName    string  `xml:"allianceName,attr"`
+			CharacterID     int64   `xml:"characterID,attr"`
+			CharacterName   string  `xml:"characterName,attr"`
+			CorporationID   int64   `xml:"corporationID,attr"`
+			CorporationName string  `xml:"corporationName,attr"`
+			DamageTaken     int64   `xml:"damageTaken,attr"`
+			FactionID       int64   `xml:"factionID,attr"`
+			FactionName     string  `xml:"factionName,attr"`
+			ShipTypeID      int64   `xml:"shipTypeID,attr"`
+			X               float64 `xml:"x,attr"`
+			Y               float64 `xml:"y,attr"`
+			Z               float64 `xml:"z,attr"`
+		} `xml:"victim"`
+		Attackers         []attacker `xml:"-"`
+		Items             []item     `xml:"-"`
+		RawAttackersItems []byte     `xml:",innerxml" json:"-"`
+	} `xml:"result>rowset>row"`
+}
+
+func (c *AuthenticatedClient) KillMailsXML(characterID int64, fromID int64, rowCount int64) (*KillMailsXML, error) {
+	token, err := c.tokenSource.Token()
 	if err != nil {
 		return nil, err
 	}
-	return w, nil
+
+	v := &KillMailsXML{}
+
+	url := c.base.XML + fmt.Sprintf("char/KillMails.xml.aspx?characterID=%d&accessToken=%s", characterID, token.AccessToken)
+	_, err = c.doXML("GET", url, nil, v)
+	if err != nil {
+		return nil, err
+	}
+
+	// Loop through all the kills
+	for i, x := range v.Kills {
+		// Decode items and attackers.
+		v.Kills[i].Attackers, v.Kills[i].Items = decodeAttackerAndItems(x.RawAttackersItems)
+		v.Kills[i].RawAttackersItems = []byte{}
+
+		// Find the killing blow
+		for _, y := range x.Attackers {
+			if y.FinalBlow == true {
+				// Compute the kill hash
+				v.Kills[i].Hash = GenerateKillMailHash(x.Victim.CharacterID, y.CharacterID, x.Victim.ShipTypeID, x.KillTime.UTC())
+				break
+			}
+		}
+	}
+	return v, nil
 }
-*/
+
+// http://stackoverflow.com/questions/39928674/go-unmarshal-nested-arrays-with-identical-name-but-separate-elements
+func decodeAttackerAndItems(data []byte) ([]attacker, []item) {
+	xmlReader := bytes.NewReader(data)
+	decoder := xml.NewDecoder(xmlReader)
+
+	const (
+		unknown int = iota
+		attackers
+		items
+	)
+	rowset := unknown
+
+	attackerList := []attacker{}
+	itemList := []item{}
+
+	for {
+		t, _ := decoder.Token()
+		if t == nil {
+			break
+		}
+
+		switch se := t.(type) {
+		case xml.StartElement:
+			if se.Name.Local == "rowset" {
+				rowset = unknown
+				for _, attr := range se.Attr {
+					if attr.Name.Local == "name" {
+						if attr.Value == "attackers" {
+							rowset = attackers
+							break
+						} else if attr.Value == "items" {
+							rowset = items
+							break
+						}
+					}
+				}
+			} else if se.Name.Local == "row" {
+				switch rowset {
+				case attackers:
+					a := attacker{}
+					if err := decoder.DecodeElement(&a, &se); err == nil {
+						attackerList = append(attackerList, a)
+					}
+				case items:
+					it := item{}
+					if err := decoder.DecodeElement(&it, &se); err == nil {
+						itemList = append(itemList, it)
+					}
+				}
+			}
+		}
+	}
+
+	return attackerList, itemList
+}
 
 // Generate the killmail hash using source information.
 func GenerateKillMailHash(victimID int64, attackerID int64, shipTypeID int64, killTime time.Time) string {
