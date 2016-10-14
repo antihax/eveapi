@@ -1,6 +1,9 @@
 package eveapi
 
-import "fmt"
+import (
+	"fmt"
+	"regexp"
+)
 
 // CharacterInfo returned data from XML API
 type CharacterInfoXML struct {
@@ -88,4 +91,17 @@ func (c *AnonymousClient) CharacterV4(href string) (*CharacterV4, error) {
 func (c *AnonymousClient) CharacterV4ByID(id int64) (*CharacterV4, error) {
 	href := c.base.CREST + fmt.Sprintf("characters/%d/", id)
 	return c.CharacterV4(href)
+}
+
+// https://community.eveonline.com/support/policies/naming-policy-en/
+func ValidCharacterName(name string) bool {
+	if len(name) > 37 {
+		return false
+	}
+
+	if m, _ := regexp.MatchString("^[a-zA-Z0-9' -]+$", name); !m {
+		return false
+	}
+
+	return true
 }
