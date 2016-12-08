@@ -87,14 +87,17 @@ func (c *AuthenticatedClient) newRequest(method, urlStr string, body interface{}
 
 // Calls a resource from the public XML API
 func (c *AnonymousClient) doXML(method, urlStr string, body interface{}, v interface{}) (*http.Response, error) {
+	xmlThrottle.throttleRequest()  // Throttle XML requests
+	connectionLimit.startRequest() // Limit concurrent requests
+	defer connectionLimit.endRequest()
+
 	req, err := c.newRequest(method, urlStr, body, "application/xml")
 	if err != nil {
 		return nil, err
 	}
-	xmlThrottle.throttleRequest()  // Throttle XML requests
-	connectionLimit.startRequest() // Limit concurrent requests
+
 	res, err := c.executeRequest(req)
-	connectionLimit.endRequest()
+
 	if err != nil {
 		return nil, err
 	}
@@ -111,18 +114,22 @@ func (c *AnonymousClient) doXML(method, urlStr string, body interface{}, v inter
 
 // Calls a resource from the public CREST
 func (c *AnonymousClient) doJSON(method, urlStr string, body interface{}, v interface{}, mediaType string) (*http.Response, error) {
+	anonThrottle.throttleRequest() // Throttle Anonymous CREST requests
+	connectionLimit.startRequest() // Limit concurrent requests
+	defer connectionLimit.endRequest()
+
 	req, err := c.newRequest(method, urlStr, body, mediaType)
 	if err != nil {
 		return nil, err
 	}
-	anonThrottle.throttleRequest() // Throttle Anonymous CREST requests
-	connectionLimit.startRequest() // Limit concurrent requests
+
 	res, err := c.executeRequest(req)
-	connectionLimit.endRequest()
 
 	if err != nil {
 		return nil, err
 	}
+
+	defer res.Body.Close()
 	buf, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		return nil, err
@@ -143,20 +150,21 @@ func (c *AnonymousClient) doJSON(method, urlStr string, body interface{}, v inte
 
 // Calls a resource from authenticated CREST.
 func (c *AuthenticatedClient) doJSON(method, urlStr string, body interface{}, v interface{}, mediaType string) (*http.Response, error) {
+	connectionLimit.startRequest()   // Limit concurrent requests
+	authedThrottle.throttleRequest() // Throttle Authenticated CREST requests
+	defer connectionLimit.endRequest()
+
 	req, err := c.newRequest(method, urlStr, body, mediaType)
 	if err != nil {
 		return nil, err
 	}
-
-	connectionLimit.startRequest()   // Limit concurrent requests
-	authedThrottle.throttleRequest() // Throttle Authenticated CREST requests
-	connectionLimit.endRequest()
 
 	res, err := c.executeRequest(req)
 	if err != nil {
 		return nil, err
 	}
 
+	defer res.Body.Close()
 	buf, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		return nil, err
