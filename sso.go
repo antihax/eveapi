@@ -62,9 +62,7 @@ func (c SSOAuthenticator) TokenExchange(client *http.Client, code string) (*CRES
 	return (*CRESTToken)(tok), nil
 }
 
-// TokenExchange exchanges the code returned to the redirectURL with
-// the CREST server to an access token. A caching client must be passed.
-// This client MUST cache per CCP guidelines or face banning.
+// TokenSource creates a refreshable token that can be passed to ESI functions
 func (c SSOAuthenticator) TokenSource(client *http.Client, token *CRESTToken) (CRESTTokenSource, error) {
 	return (CRESTTokenSource)(c.oauthConfig.TokenSource(createContext(client), (*oauth2.Token)(token))), nil
 }
