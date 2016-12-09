@@ -134,6 +134,7 @@ func (c *AnonymousClient) doJSON(method, urlStr string, body interface{}, v inte
 	if err != nil {
 		return nil, err
 	}
+
 	if res.StatusCode != http.StatusOK {
 		e := &ErrorMessage{}
 		if err := json.Unmarshal([]byte(buf), e); err != nil {
