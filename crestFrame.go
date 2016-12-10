@@ -32,12 +32,19 @@ func (c *crestSimpleFrame) getFrameInfo(r *http.Response) error {
 	// Save the URL for bookmarking purposes.
 	c.PageURL = r.Request.URL.String()
 
+	var iMaxAge int
+	var err error
+
 	// Determine the cache duration.
-	maxAge := strings.Split(r.Header.Get("Cache-Control"), "=")[1]
-	iMaxAge, err := strconv.Atoi(maxAge)
-	if err != nil {
-		return err
+	cacheControl := r.Header.Get("Cache-Control")
+	if cacheControl != "" {
+		maxAge := strings.Split(cacheControl, "=")[1]
+		iMaxAge, err = strconv.Atoi(maxAge)
+		if err != nil {
+			return err
+		}
 	}
+
 	// Get the response date.
 	date, err := time.Parse(time.RFC1123, r.Header.Get("Date"))
 	if err != nil {
