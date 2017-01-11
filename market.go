@@ -9,7 +9,7 @@ import (
 const marketOrderCollectionSlimV1Type = "application/vnd.ccp.eve.MarketOrderCollectionSlim-v1"
 
 type MarketOrderCollectionSlimV1 struct {
-	*AnonymousClient
+	*EVEAPIClient
 	crestPagedFrame
 
 	Items []struct {
@@ -29,8 +29,8 @@ type MarketOrderCollectionSlimV1 struct {
 	RegionID int64 // We wil back fill this for convienence.
 }
 
-func (c *AnonymousClient) MarketOrdersSlimV1(url string) (*MarketOrderCollectionSlimV1, error) {
-	w := &MarketOrderCollectionSlimV1{AnonymousClient: c}
+func (c *EVEAPIClient) MarketOrdersSlimV1(url string) (*MarketOrderCollectionSlimV1, error) {
+	w := &MarketOrderCollectionSlimV1{EVEAPIClient: c}
 	res, err := c.doJSON("GET", url, nil, w, marketOrderCollectionSlimV1Type)
 	if err != nil {
 		return nil, err
@@ -45,8 +45,8 @@ func (c *AnonymousClient) MarketOrdersSlimV1(url string) (*MarketOrderCollection
 	return w, nil
 }
 
-func (c *AnonymousClient) MarketOrdersSlimV1ByID(regionID int64, page int) (*MarketOrderCollectionSlimV1, error) {
-	w := &MarketOrderCollectionSlimV1{AnonymousClient: c}
+func (c *EVEAPIClient) MarketOrdersSlimV1ByID(regionID int64, page int) (*MarketOrderCollectionSlimV1, error) {
+	w := &MarketOrderCollectionSlimV1{EVEAPIClient: c}
 	url := c.base.CREST + fmt.Sprintf("market/%d/orders/all/?page=%d", regionID, page)
 	res, err := c.doJSON("GET", url, nil, w, marketOrderCollectionSlimV1Type)
 	if err != nil {
@@ -77,7 +77,7 @@ func (c *MarketOrderCollectionSlimV1) PreviousPage() (*MarketOrderCollectionSlim
 const marketTypeHistoryCollectionV1Type = "application/vnd.ccp.eve.MarketTypeHistoryCollection-v1"
 
 type MarketTypeHistoryCollectionV1 struct {
-	*AnonymousClient
+	*EVEAPIClient
 	crestPagedFrame
 
 	Items []struct {
@@ -93,8 +93,8 @@ type MarketTypeHistoryCollectionV1 struct {
 	TypeID   int64 // We wil back fill this for convienence.
 }
 
-func (c *AnonymousClient) MarketTypeHistory(url string) (*MarketTypeHistoryCollectionV1, error) {
-	w := &MarketTypeHistoryCollectionV1{AnonymousClient: c}
+func (c *EVEAPIClient) MarketTypeHistory(url string) (*MarketTypeHistoryCollectionV1, error) {
+	w := &MarketTypeHistoryCollectionV1{EVEAPIClient: c}
 
 	res, err := c.doJSON("GET", url, nil, w, marketTypeHistoryCollectionV1Type)
 	if err != nil {
@@ -117,7 +117,7 @@ func (c *AnonymousClient) MarketTypeHistory(url string) (*MarketTypeHistoryColle
 	return w, nil
 }
 
-func (c *AnonymousClient) MarketTypeHistoryV1ByID(regionID int64, typeID int64) (*MarketTypeHistoryCollectionV1, error) {
+func (c *EVEAPIClient) MarketTypeHistoryV1ByID(regionID int64, typeID int64) (*MarketTypeHistoryCollectionV1, error) {
 	url := c.base.CREST + fmt.Sprintf("market/%d/history/?type="+c.base.CREST+"inventory/types/%d/", regionID, typeID)
 	return c.MarketTypeHistory(url)
 }

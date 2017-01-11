@@ -11,6 +11,7 @@ import (
 // SSOAuthenticator provides interfacing to the CREST SSO. NewSSOAuthenticator is used to create
 // this structure.
 type SSOAuthenticator struct {
+	httpClient *http.Client
 	// Hide this...
 	oauthConfig *oauth2.Config
 }
@@ -23,9 +24,17 @@ type CRESTTokenSource oauth2.TokenSource
 // NewSSOAuthenticator create a new CREST SSO Authenticator.
 // Requires your application clientID, clientSecret, and redirectURL.
 // RedirectURL must match exactly to what you registered with CCP.
-func NewSSOAuthenticator(clientID string, clientSecret string, redirectURL string, scopes []string) *SSOAuthenticator {
-	client := &SSOAuthenticator{}
-	client.oauthConfig = &oauth2.Config{
+func NewSSOAuthenticator(client *http.Client, clientID string, clientSecret string, redirectURL string, scopes []string) *SSOAuthenticator {
+
+	if client == nil {
+		return nil
+	}
+
+	c := &SSOAuthenticator{}
+
+	c.httpClient = client
+
+	c.oauthConfig = &oauth2.Config{
 		ClientID:     clientID,
 		ClientSecret: clientSecret,
 		Endpoint: oauth2.Endpoint{
@@ -35,7 +44,7 @@ func NewSSOAuthenticator(clientID string, clientSecret string, redirectURL strin
 		Scopes:      scopes,
 		RedirectURL: redirectURL,
 	}
-	return client
+	return c
 }
 
 // AuthorizeURL returns a url for an end user to authenticate with EVE SSO
@@ -53,9 +62,9 @@ func (c SSOAuthenticator) AuthorizeURL(state string, onlineAccess bool) string {
 // TokenExchange exchanges the code returned to the redirectURL with
 // the CREST server to an access token. A caching client must be passed.
 // This client MUST cache per CCP guidelines or face banning.
-func (c SSOAuthenticator) TokenExchange(client *http.Client, code string) (*CRESTToken, error) {
+func (c SSOAuthenticator) TokenExchange(code string) (*CRESTToken, error) {
 
-	tok, err := c.oauthConfig.Exchange(createContext(client), code)
+	tok, err := c.oauthConfig.Exchange(createContext(c.httpClient), code)
 	if err != nil {
 		return nil, err
 	}
@@ -63,23 +72,8 @@ func (c SSOAuthenticator) TokenExchange(client *http.Client, code string) (*CRES
 }
 
 // TokenSource creates a refreshable token that can be passed to ESI functions
-func (c SSOAuthenticator) TokenSource(client *http.Client, token *CRESTToken) (CRESTTokenSource, error) {
-	return (CRESTTokenSource)(c.oauthConfig.TokenSource(createContext(client), (*oauth2.Token)(token))), nil
-}
-
-// GetClientFromToken returns a new authenticated client.
-// Caller must provide a caching http.Client that obeys all cacheUntil timers.
-// One authenticated client per IP address or rate limits will be exceeded resulting in a ban.
-func (c SSOAuthenticator) GetClientFromToken(httpClient *http.Client, token *CRESTToken) *AuthenticatedClient {
-	client := c.oauthConfig.Client(createContext(httpClient), (*oauth2.Token)(token))
-
-	a := &AuthenticatedClient{}
-	a.base = eveTQ
-	a.userAgent = USER_AGENT
-	a.httpClient = client
-	a.tokenSource = c.oauthConfig.TokenSource(createContext(httpClient), (*oauth2.Token)(token))
-
-	return a
+func (c SSOAuthenticator) TokenSource(token *CRESTToken) (CRESTTokenSource, error) {
+	return (CRESTTokenSource)(c.oauthConfig.TokenSource(createContext(c.httpClient), (*oauth2.Token)(token))), nil
 }
 
 // Add custom clients to the context.

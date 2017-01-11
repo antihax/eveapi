@@ -31,11 +31,11 @@ type CorporationSheetXML struct {
 }
 
 // GetCharacterInfo queries the XML API for a given characterID.
-func (c *AnonymousClient) CorporationPublicSheetXML(corporationID int64) (*CorporationSheetXML, error) {
+func (c *EVEAPIClient) CorporationPublicSheetXML(corporationID int64) (*CorporationSheetXML, error) {
 	w := &CorporationSheetXML{}
 
 	url := c.base.XML + fmt.Sprintf("corp/CorporationSheet.xml.aspx?corporationID=%d", corporationID)
-	_, err := c.doXML("GET", url, nil, w)
+	_, err := c.doXML("GET", url, nil, w, nil)
 	if err != nil {
 		return nil, err
 	}

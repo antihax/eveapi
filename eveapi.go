@@ -26,7 +26,7 @@ An example using gregjones/httpcache and memcache:
 		client = &http.Client{Transport: transport}
 
 		// Get our EVE API.
-		eve := eveapi.NewAnonymousClient(client)
+		eve := eveapi.NewEVEAPIClient(client)
 	}
 
 Rate Limiting
@@ -42,7 +42,7 @@ is recommended to use this for all public calls due to the higher rate limits.
 
 Anonymous clients are created simply by supplying a caching HTTP Client.
 
-	eve := eveapi.NewAnonymousClient(client)
+	eve := eveapi.NewEVEAPIClient(client)
 
 Private Clients
 
@@ -54,7 +54,7 @@ to what was provided to CCP on the Manage Applications page.
 	scopes := []string{eveapi.ScopeCharacterContactsRead,
 		eveapi.ScopeCharacterContactsWrite}
 
-	tokenAuthenticator = eveapi.NewSSOAuthenticator(clientID, secretKey, redirectURL, scopes)
+	tokenAuthenticator = eveapi.NewSSOAuthenticator(httpClient, clientID, secretKey, redirectURL, scopes)
 
 	privateClient := tokenAuthenticator.GetClientFromToken(client, token)
 
@@ -105,16 +105,26 @@ In the example custom httpHandlers below, SSOAuthenticator, is a created by NewS
 		}
 
 		// Exchange the code for an Access and Refresh token.
-		token, err := c.SSOAuthenticator.TokenExchange(c.HTTPClient, code)
+		token, err := c.SSOAuthenticator.TokenExchange(code)
 		if err != nil {
 			return http.StatusInternalServerError, errors.New("Failed Token Exchange")
 		}
 
-		// Obtain a private authenticated client for this token.
-		cli := c.SSOAuthenticator.GetClientFromToken(c.HTTPClient, token)
+		// Obtain a token source (automaticlly pulls refresh as needed)
+		tokSrc, err := c.SSOAuthenticator.TokenSource(tok)
+		if err != nil {
+			return http.StatusInternalServerError, err
+		}
 
-		// Verify the access token (will automaticlly use Refresh token if it is expired)
-		v, err := cli.Verify()
+		// Assign an auth context to the calls
+		auth := context.WithValue(context.TODO(), esi.ContextOAuth2, tokSrc.Token)
+
+		// Verify the client (returns clientID)
+		v, err := c.EVE.Verify(auth)
+		if err != nil {
+			return http.StatusInternalServerError, err
+		}
+
 		if err != nil {
 			return http.StatusInternalServerError, err
 		}

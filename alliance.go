@@ -5,7 +5,7 @@ import "fmt"
 const alliancesCollectionV2Type = "application/vnd.ccp.eve.AlliancesCollection-v2"
 
 type AlliancesCollectionV2 struct {
-	*AnonymousClient
+	*EVEAPIClient
 	crestPagedFrame
 	Items []struct {
 		ShortName string
@@ -15,8 +15,8 @@ type AlliancesCollectionV2 struct {
 	}
 }
 
-func (c *AnonymousClient) AlliancesV2(page int) (*AlliancesCollectionV2, error) {
-	w := &AlliancesCollectionV2{AnonymousClient: c}
+func (c *EVEAPIClient) AlliancesV2(page int) (*AlliancesCollectionV2, error) {
+	w := &AlliancesCollectionV2{EVEAPIClient: c}
 	url := c.base.CREST + fmt.Sprintf("alliances/?page=%d", page)
 	res, err := c.doJSON("GET", url, nil, w, alliancesCollectionV2Type)
 	if err != nil {
@@ -27,7 +27,7 @@ func (c *AnonymousClient) AlliancesV2(page int) (*AlliancesCollectionV2, error) 
 }
 
 func (c *AlliancesCollectionV2) NextPage() (*AlliancesCollectionV2, error) {
-	w := &AlliancesCollectionV2{AnonymousClient: c.AnonymousClient}
+	w := &AlliancesCollectionV2{EVEAPIClient: c.EVEAPIClient}
 	if c.Next.HRef == "" {
 		return nil, nil
 	}
@@ -42,7 +42,7 @@ func (c *AlliancesCollectionV2) NextPage() (*AlliancesCollectionV2, error) {
 const allianceV1Type = "application/vnd.ccp.eve.Alliance-v1"
 
 type AllianceV1 struct {
-	*AnonymousClient
+	*EVEAPIClient
 	crestSimpleFrame
 	StartDate           EVETime
 	CorporationsCount   int64
@@ -58,8 +58,8 @@ type AllianceV1 struct {
 	Corporations        []entityReference
 }
 
-func (c *AnonymousClient) Alliance(href string) (*AllianceV1, error) {
-	w := &AllianceV1{AnonymousClient: c}
+func (c *EVEAPIClient) Alliance(href string) (*AllianceV1, error) {
+	w := &AllianceV1{EVEAPIClient: c}
 	res, err := c.doJSON("GET", href, nil, w, allianceV1Type)
 	if err != nil {
 		return nil, err
@@ -68,7 +68,7 @@ func (c *AnonymousClient) Alliance(href string) (*AllianceV1, error) {
 	return w, nil
 }
 
-func (c *AnonymousClient) AllianceByID(id int64) (*AllianceV1, error) {
+func (c *EVEAPIClient) AllianceByID(id int64) (*AllianceV1, error) {
 	href := c.base.CREST + fmt.Sprintf("alliances/%d/", id)
 	return c.Alliance(href)
 }

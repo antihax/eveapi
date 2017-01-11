@@ -36,11 +36,11 @@ type CharacterInfoXML struct {
 }
 
 // GetCharacterInfo queries the XML API for a given characterID.
-func (c *AnonymousClient) CharacterInfoXML(characterID int64) (*CharacterInfoXML, error) {
+func (c *EVEAPIClient) CharacterInfoXML(characterID int64) (*CharacterInfoXML, error) {
 	w := &CharacterInfoXML{}
 
 	url := c.base.XML + fmt.Sprintf("eve/CharacterInfo.xml.aspx?characterID=%d", characterID)
-	_, err := c.doXML("GET", url, nil, w)
+	_, err := c.doXML("GET", url, nil, w, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +50,7 @@ func (c *AnonymousClient) CharacterInfoXML(characterID int64) (*CharacterInfoXML
 const characterV4Type = "application/vnd.ccp.eve.Character-v4"
 
 type CharacterV4 struct {
-	*AnonymousClient
+	*EVEAPIClient
 	crestSimpleFrame
 	idHref
 
@@ -78,8 +78,8 @@ type CharacterV4 struct {
 	Portrait imageList
 }
 
-func (c *AnonymousClient) CharacterV4(href string) (*CharacterV4, error) {
-	w := &CharacterV4{AnonymousClient: c}
+func (c *EVEAPIClient) CharacterV4(href string) (*CharacterV4, error) {
+	w := &CharacterV4{EVEAPIClient: c}
 	res, err := c.doJSON("GET", href, nil, w, characterV4Type)
 	if err != nil {
 		return nil, err
@@ -88,7 +88,7 @@ func (c *AnonymousClient) CharacterV4(href string) (*CharacterV4, error) {
 	return w, nil
 }
 
-func (c *AnonymousClient) CharacterV4ByID(id int64) (*CharacterV4, error) {
+func (c *EVEAPIClient) CharacterV4ByID(id int64) (*CharacterV4, error) {
 	href := c.base.CREST + fmt.Sprintf("characters/%d/", id)
 	return c.CharacterV4(href)
 }

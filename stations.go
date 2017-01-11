@@ -15,11 +15,11 @@ type ConquerableStationsXML struct {
 }
 
 // GetCharacterInfo queries the XML API for a given characterID.
-func (c *AnonymousClient) ConquerableStationsListXML() (*ConquerableStationsXML, error) {
+func (c *EVEAPIClient) ConquerableStationsListXML() (*ConquerableStationsXML, error) {
 	w := &ConquerableStationsXML{}
 
 	url := c.base.XML + fmt.Sprintf("/eve/ConquerableStationList.xml.aspx")
-	_, err := c.doXML("GET", url, nil, w)
+	_, err := c.doXML("GET", url, nil, w, nil)
 	if err != nil {
 		return nil, err
 	}

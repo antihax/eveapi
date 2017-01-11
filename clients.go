@@ -2,28 +2,20 @@ package eveapi
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"encoding/xml"
 	"errors"
 	"io/ioutil"
 	"net/http"
 	"net/url"
-
-	"golang.org/x/oauth2"
 )
 
-// AnonymousClient for Public CREST and Public XML API queries.
-type AnonymousClient struct {
+// EVEAPIClient for Public CREST and Public XML API queries.
+type EVEAPIClient struct {
 	httpClient *http.Client
 	base       EveURI
 	userAgent  string
-}
-
-// AuthenticatedClient for Private CREST and Private XML API queries. SSO Authenticated.
-type AuthenticatedClient struct {
-	AnonymousClient
-	tokenSource oauth2.TokenSource
-	character   *VerifyResponse
 }
 
 // ErrorMessage format if a CREST query fails.
@@ -32,14 +24,13 @@ type ErrorMessage struct {
 }
 
 // Executes a request generated with newRequest
-func (c *AnonymousClient) executeRequest(req *http.Request) (*http.Response, error) {
+func (c *EVEAPIClient) executeRequest(req *http.Request) (*http.Response, error) {
 	res, err := c.httpClient.Do(req)
 
 	if err != nil {
 		return nil, err
 	}
 	if res.StatusCode == http.StatusOK ||
-		res.StatusCode == http.StatusCreated ||
 		res.StatusCode == http.StatusCreated {
 		return res, nil
 	} else {
@@ -49,7 +40,7 @@ func (c *AnonymousClient) executeRequest(req *http.Request) (*http.Response, err
 }
 
 // Creates a new http.Request for a public resource.
-func (c *AnonymousClient) newRequest(method, urlStr string, body interface{}, mediaType string) (*http.Request, error) {
+func (c *EVEAPIClient) newRequest(method, urlStr string, body interface{}, mediaType string) (*http.Request, error) {
 	rel, err := url.Parse(urlStr)
 	if err != nil {
 		return nil, err
@@ -75,18 +66,8 @@ func (c *AnonymousClient) newRequest(method, urlStr string, body interface{}, me
 	return req, nil
 }
 
-// Provides a new http.Request for an authenticated resource.
-func (c *AuthenticatedClient) newRequest(method, urlStr string, body interface{}, mediaType string) (*http.Request, error) {
-	req, err := c.AnonymousClient.newRequest(method, urlStr, body, mediaType)
-	if err != nil {
-		return nil, err
-	}
-
-	return req, nil
-}
-
 // Calls a resource from the public XML API
-func (c *AnonymousClient) doXML(method, urlStr string, body interface{}, v interface{}) (*http.Response, error) {
+func (c *EVEAPIClient) doXML(method, urlStr string, body interface{}, v interface{}, ctx context.Context) (*http.Response, error) {
 	xmlThrottle.throttleRequest()  // Throttle XML requests
 	connectionLimit.startRequest() // Limit concurrent requests
 	defer connectionLimit.endRequest()
@@ -113,7 +94,7 @@ func (c *AnonymousClient) doXML(method, urlStr string, body interface{}, v inter
 }
 
 // Calls a resource from the public CREST
-func (c *AnonymousClient) doJSON(method, urlStr string, body interface{}, v interface{}, mediaType string) (*http.Response, error) {
+func (c *EVEAPIClient) doJSON(method, urlStr string, body interface{}, v interface{}, mediaType string) (*http.Response, error) {
 	anonThrottle.throttleRequest() // Throttle Anonymous CREST requests
 	connectionLimit.startRequest() // Limit concurrent requests
 	defer connectionLimit.endRequest()
@@ -149,67 +130,20 @@ func (c *AnonymousClient) doJSON(method, urlStr string, body interface{}, v inte
 	return res, nil
 }
 
-// Calls a resource from authenticated CREST.
-func (c *AuthenticatedClient) doJSON(method, urlStr string, body interface{}, v interface{}, mediaType string) (*http.Response, error) {
-	connectionLimit.startRequest()   // Limit concurrent requests
-	authedThrottle.throttleRequest() // Throttle Authenticated CREST requests
-	defer connectionLimit.endRequest()
-
-	req, err := c.newRequest(method, urlStr, body, mediaType)
-	if err != nil {
-		return nil, err
-	}
-
-	res, err := c.executeRequest(req)
-	if err != nil {
-		return nil, err
-	}
-
-	defer res.Body.Close()
-	buf, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	if res.StatusCode == http.StatusCreated {
-		return res, nil
-	} else if res.StatusCode != http.StatusOK {
-		e := &ErrorMessage{}
-		if err = json.Unmarshal([]byte(buf), e); err != nil {
-			return nil, err
-		}
-		return nil, errors.New(e.Message)
-	} else {
-		if err = json.Unmarshal([]byte(buf), v); err != nil {
-			return res, err
-		}
-	}
-	return res, err
-}
-
 // SetUI set the user agent string of the CREST and XML client.
 // It is recommended to change this so that CCP can identify your app.
-func (c *AnonymousClient) SetUA(userAgent string) {
+func (c *EVEAPIClient) SetUA(userAgent string) {
 	c.userAgent = userAgent
 }
 
 // UseCustomURL allows the base URLs to be changed should the need arise
 // for a third party proxy to be used.
-func (c *AnonymousClient) UseCustomURL(custom EveURI) {
+func (c *EVEAPIClient) UseCustomURL(custom EveURI) {
 	c.base = custom
 }
 
-// GetCharacterID returns the associated characterID for this authenticated client.
-// Verify must be called prior to this becoming available or it will return 0.
-func (c *AuthenticatedClient) GetCharacterID() int64 {
-	if c.character == nil {
-		return 0
-	}
-	return c.character.CharacterID
-}
-
 // UseTestServer forces this client to use the test server URLs.
-func (c *AnonymousClient) UseTestServer(testServer bool) {
+func (c *EVEAPIClient) UseTestServer(testServer bool) {
 	if testServer == true {
 		c.base = eveSisi
 	} else {
@@ -217,11 +151,11 @@ func (c *AnonymousClient) UseTestServer(testServer bool) {
 	}
 }
 
-// NewAnonymousClient generates a new anonymous client.
+// EVEAPIClient generates a new anonymous client.
 // Caller must provide a caching http.Client that obeys all cacheUntil timers
 // One Anonymous client per IP address or rate limits will be exceeded resulting in a ban.
-func NewAnonymousClient(client *http.Client) *AnonymousClient {
-	c := &AnonymousClient{}
+func NewEVEAPIClient(client *http.Client) *EVEAPIClient {
+	c := &EVEAPIClient{}
 	c.base = eveTQ
 	c.httpClient = client
 	c.userAgent = USER_AGENT
@@ -238,45 +172,32 @@ type VerifyResponse struct {
 }
 
 // Verify the client and collect user information.
-func (c *AuthenticatedClient) Verify() (*VerifyResponse, error) {
+func (c *EVEAPIClient) Verify(auth context.Context) (*VerifyResponse, error) {
 	v := &VerifyResponse{}
 	_, err := c.doJSON("GET", c.base.Login+"oauth/verify", nil, v, "application/json;")
-	c.character = v
+
 	if err != nil {
 		return nil, err
 	}
 	return v, nil
 }
 
-// Verify that the client is validated.
-func (c *AuthenticatedClient) validateClient() error {
-	var err error
-	if c.character != nil {
-		return nil
-	}
-	c.character, err = c.Verify()
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (c *AnonymousClient) GetCRESTURI() string {
+func (c *EVEAPIClient) GetCRESTURI() string {
 	return c.base.CREST
 }
 
-func (c *AnonymousClient) GetXMLURI() string {
+func (c *EVEAPIClient) GetXMLURI() string {
 	return c.base.XML
 }
 
-func (c *AnonymousClient) GetLoginURI() string {
+func (c *EVEAPIClient) GetLoginURI() string {
 	return c.base.Login
 }
 
-func (c *AnonymousClient) GetImageURI() string {
+func (c *EVEAPIClient) GetImageURI() string {
 	return c.base.Images
 }
 
-func (c *AnonymousClient) GetManagementURI() string {
+func (c *EVEAPIClient) GetManagementURI() string {
 	return c.base.AppManagement
 }

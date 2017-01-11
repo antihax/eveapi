@@ -9,7 +9,7 @@ import (
 
 func TestKillmail(t *testing.T) {
 	client := &http.Client{}
-	r := NewAnonymousClient(client)
+	r := NewEVEAPIClient(client)
 	c, err := r.KillmailV1ByID(40583728, "efd4bf9c4f2aee704d3f9a7f8ae0176a15eba19d")
 	if err != nil {
 		t.Errorf("Error getting killmail %v", err)

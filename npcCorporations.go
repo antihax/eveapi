@@ -5,7 +5,7 @@ import "fmt"
 const npcCorporationsCollectionV1Type = "application/vnd.ccp.eve.NPCCorporationsCollection-v1"
 
 type NPCCorporationsCollectionV1 struct {
-	*AnonymousClient
+	*EVEAPIClient
 	crestPagedFrame
 
 	Items []struct {
@@ -19,8 +19,8 @@ type NPCCorporationsCollectionV1 struct {
 	}
 }
 
-func (c *AnonymousClient) NPCCorporationsV1(page int64) (*NPCCorporationsCollectionV1, error) {
-	ret := &NPCCorporationsCollectionV1{AnonymousClient: c}
+func (c *EVEAPIClient) NPCCorporationsV1(page int64) (*NPCCorporationsCollectionV1, error) {
+	ret := &NPCCorporationsCollectionV1{EVEAPIClient: c}
 	url := c.base.CREST + fmt.Sprintf("corporations/npccorps/?page=%d", page)
 
 	res, err := c.doJSON("GET", url, nil, ret, npcCorporationsCollectionV1Type)
@@ -33,7 +33,7 @@ func (c *AnonymousClient) NPCCorporationsV1(page int64) (*NPCCorporationsCollect
 }
 
 func (c *NPCCorporationsCollectionV1) NextPage() (*NPCCorporationsCollectionV1, error) {
-	w := &NPCCorporationsCollectionV1{AnonymousClient: c.AnonymousClient}
+	w := &NPCCorporationsCollectionV1{EVEAPIClient: c.EVEAPIClient}
 	if c.Next.HRef == "" {
 		return nil, nil
 	}
@@ -46,7 +46,7 @@ func (c *NPCCorporationsCollectionV1) NextPage() (*NPCCorporationsCollectionV1, 
 }
 
 func (c *NPCCorporationsCollectionV1) PreviousPage() (*NPCCorporationsCollectionV1, error) {
-	w := &NPCCorporationsCollectionV1{AnonymousClient: c.AnonymousClient}
+	w := &NPCCorporationsCollectionV1{EVEAPIClient: c.EVEAPIClient}
 	if c.Previous.HRef == "" {
 		return nil, nil
 	}
