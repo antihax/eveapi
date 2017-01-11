@@ -1,6 +1,7 @@
 package eveapi
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 )
@@ -40,7 +41,44 @@ func (c *EVEAPIClient) CharacterInfoXML(characterID int64) (*CharacterInfoXML, e
 	w := &CharacterInfoXML{}
 
 	url := c.base.XML + fmt.Sprintf("eve/CharacterInfo.xml.aspx?characterID=%d", characterID)
-	_, err := c.doXML("GET", url, nil, w, nil)
+	_, err := c.doXML("GET", url, nil, w, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+	return w, nil
+}
+
+type WalletJournalXML struct {
+	xmlAPIFrame
+	EmploymentHistory []struct {
+		RefID         int64      `xml:"refID,attr"`
+		RefTypeID     int64      `xml:"refTypeID,attr"`
+		OwnerName1    string     `xml:"ownerName1,attr"`
+		OwnerID1      int64      `xml:"ownerID1,attr"`
+		OwnerName2    string     `xml:"ownerName2,attr"`
+		OwnerID2      int64      `xml:"ownerID2,attr"`
+		ArgName1      string     `xml:"argName1,attr"`
+		ArgID1        int64      `xml:"argID1,attr"`
+		Amount        float64    `xml:"amount,attr"`
+		Balance       float64    `xml:"balance,attr"`
+		Reason        string     `xml:"reason,attr"`
+		TaxReceiverID int64      `xml:"taxReceiverID,attr"`
+		TaxAmount     float64    `xml:"taxAmount,attr"`
+		Date          EVEXMLTime `xml:"date,attr"`
+	} `xml:"result>rowset>row"`
+}
+
+// GetCharacterInfo queries the XML API for a given characterID.
+func (c *EVEAPIClient) CharacterWalletJournalXML(auth context.Context, characterID int64, fromID int64) (*WalletJournalXML, error) {
+	w := &WalletJournalXML{}
+
+	from := ""
+	if fromID > 0 {
+		from = fmt.Sprintf("&fromID=%d", fromID)
+	}
+
+	url := c.base.XML + fmt.Sprintf("char/WalletJournal.xml.aspx?characterID=%d&rowCount=2560%s", characterID, from)
+	_, err := c.doXML("GET", url, nil, w, nil, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -80,7 +118,7 @@ type CharacterV4 struct {
 
 func (c *EVEAPIClient) CharacterV4(href string) (*CharacterV4, error) {
 	w := &CharacterV4{EVEAPIClient: c}
-	res, err := c.doJSON("GET", href, nil, w, characterV4Type)
+	res, err := c.doJSON("GET", href, nil, w, characterV4Type, nil)
 	if err != nil {
 		return nil, err
 	}

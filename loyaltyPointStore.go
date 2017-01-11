@@ -25,7 +25,7 @@ type LoyaltyStoreOffersCollectionV1 struct {
 func (c *EVEAPIClient) LoyaltyPointStoreV1(url string) (*LoyaltyStoreOffersCollectionV1, error) {
 	ret := &LoyaltyStoreOffersCollectionV1{EVEAPIClient: c}
 
-	res, err := c.doJSON("GET", url, nil, ret, loyaltyStoreOffersCollectionV1Type)
+	res, err := c.doJSON("GET", url, nil, ret, loyaltyStoreOffersCollectionV1Type, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -45,7 +45,7 @@ func (c *LoyaltyStoreOffersCollectionV1) NextPage() (*LoyaltyStoreOffersCollecti
 		return nil, nil
 	}
 
-	res, err := c.doJSON("GET", c.Next.HRef, nil, w, loyaltyStoreOffersCollectionV1Type)
+	res, err := c.doJSON("GET", c.Next.HRef, nil, w, loyaltyStoreOffersCollectionV1Type, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +58,7 @@ func (c *LoyaltyStoreOffersCollectionV1) PreviousPage() (*LoyaltyStoreOffersColl
 	if c.Previous.HRef == "" {
 		return nil, nil
 	}
-	res, err := c.doJSON("GET", c.Previous.HRef, nil, w, loyaltyStoreOffersCollectionV1Type)
+	res, err := c.doJSON("GET", c.Previous.HRef, nil, w, loyaltyStoreOffersCollectionV1Type, nil)
 	if err != nil {
 		return nil, err
 	}

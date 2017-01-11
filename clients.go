@@ -9,6 +9,8 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+
+	"golang.org/x/oauth2"
 )
 
 // EVEAPIClient for Public CREST and Public XML API queries.
@@ -67,7 +69,7 @@ func (c *EVEAPIClient) newRequest(method, urlStr string, body interface{}, media
 }
 
 // Calls a resource from the public XML API
-func (c *EVEAPIClient) doXML(method, urlStr string, body interface{}, v interface{}, ctx context.Context) (*http.Response, error) {
+func (c *EVEAPIClient) doXML(method, urlStr string, body interface{}, v interface{}, ctx context.Context, auth oauth2.TokenSource) (*http.Response, error) {
 	xmlThrottle.throttleRequest()  // Throttle XML requests
 	connectionLimit.startRequest() // Limit concurrent requests
 	defer connectionLimit.endRequest()
@@ -76,7 +78,17 @@ func (c *EVEAPIClient) doXML(method, urlStr string, body interface{}, v interfac
 	if err != nil {
 		return nil, err
 	}
+	if auth != nil {
 
+		// We were able to grab an oauth2 token from the context
+		var latestToken *oauth2.Token
+		if latestToken, err = auth.Token(); err != nil {
+			return nil, err
+		}
+
+		latestToken.SetAuthHeader(req)
+
+	}
 	res, err := c.executeRequest(req)
 
 	if err != nil {
@@ -94,7 +106,7 @@ func (c *EVEAPIClient) doXML(method, urlStr string, body interface{}, v interfac
 }
 
 // Calls a resource from the public CREST
-func (c *EVEAPIClient) doJSON(method, urlStr string, body interface{}, v interface{}, mediaType string) (*http.Response, error) {
+func (c *EVEAPIClient) doJSON(method, urlStr string, body interface{}, v interface{}, mediaType string, auth oauth2.TokenSource) (*http.Response, error) {
 	anonThrottle.throttleRequest() // Throttle Anonymous CREST requests
 	connectionLimit.startRequest() // Limit concurrent requests
 	defer connectionLimit.endRequest()
@@ -102,6 +114,15 @@ func (c *EVEAPIClient) doJSON(method, urlStr string, body interface{}, v interfa
 	req, err := c.newRequest(method, urlStr, body, mediaType)
 	if err != nil {
 		return nil, err
+	}
+
+	if auth != nil {
+		// We were able to grab an oauth2 token from the context
+		var latestToken *oauth2.Token
+		if latestToken, err = auth.Token(); err != nil {
+			return nil, err
+		}
+		latestToken.SetAuthHeader(req)
 	}
 
 	res, err := c.executeRequest(req)
@@ -172,9 +193,9 @@ type VerifyResponse struct {
 }
 
 // Verify the client and collect user information.
-func (c *EVEAPIClient) Verify(auth context.Context) (*VerifyResponse, error) {
+func (c *EVEAPIClient) Verify(auth oauth2.TokenSource) (*VerifyResponse, error) {
 	v := &VerifyResponse{}
-	_, err := c.doJSON("GET", c.base.Login+"oauth/verify", nil, v, "application/json;")
+	_, err := c.doJSON("GET", c.base.Login+"oauth/verify", nil, v, "application/json;", auth)
 
 	if err != nil {
 		return nil, err

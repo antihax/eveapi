@@ -31,7 +31,7 @@ type MarketOrderCollectionSlimV1 struct {
 
 func (c *EVEAPIClient) MarketOrdersSlimV1(url string) (*MarketOrderCollectionSlimV1, error) {
 	w := &MarketOrderCollectionSlimV1{EVEAPIClient: c}
-	res, err := c.doJSON("GET", url, nil, w, marketOrderCollectionSlimV1Type)
+	res, err := c.doJSON("GET", url, nil, w, marketOrderCollectionSlimV1Type, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -48,7 +48,7 @@ func (c *EVEAPIClient) MarketOrdersSlimV1(url string) (*MarketOrderCollectionSli
 func (c *EVEAPIClient) MarketOrdersSlimV1ByID(regionID int64, page int) (*MarketOrderCollectionSlimV1, error) {
 	w := &MarketOrderCollectionSlimV1{EVEAPIClient: c}
 	url := c.base.CREST + fmt.Sprintf("market/%d/orders/all/?page=%d", regionID, page)
-	res, err := c.doJSON("GET", url, nil, w, marketOrderCollectionSlimV1Type)
+	res, err := c.doJSON("GET", url, nil, w, marketOrderCollectionSlimV1Type, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -96,7 +96,7 @@ type MarketTypeHistoryCollectionV1 struct {
 func (c *EVEAPIClient) MarketTypeHistory(url string) (*MarketTypeHistoryCollectionV1, error) {
 	w := &MarketTypeHistoryCollectionV1{EVEAPIClient: c}
 
-	res, err := c.doJSON("GET", url, nil, w, marketTypeHistoryCollectionV1Type)
+	res, err := c.doJSON("GET", url, nil, w, marketTypeHistoryCollectionV1Type, nil)
 	if err != nil {
 		return nil, err
 	}

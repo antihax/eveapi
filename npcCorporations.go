@@ -23,7 +23,7 @@ func (c *EVEAPIClient) NPCCorporationsV1(page int64) (*NPCCorporationsCollection
 	ret := &NPCCorporationsCollectionV1{EVEAPIClient: c}
 	url := c.base.CREST + fmt.Sprintf("corporations/npccorps/?page=%d", page)
 
-	res, err := c.doJSON("GET", url, nil, ret, npcCorporationsCollectionV1Type)
+	res, err := c.doJSON("GET", url, nil, ret, npcCorporationsCollectionV1Type, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -37,7 +37,7 @@ func (c *NPCCorporationsCollectionV1) NextPage() (*NPCCorporationsCollectionV1, 
 	if c.Next.HRef == "" {
 		return nil, nil
 	}
-	res, err := c.doJSON("GET", c.Next.HRef, nil, w, npcCorporationsCollectionV1Type)
+	res, err := c.doJSON("GET", c.Next.HRef, nil, w, npcCorporationsCollectionV1Type, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +50,7 @@ func (c *NPCCorporationsCollectionV1) PreviousPage() (*NPCCorporationsCollection
 	if c.Previous.HRef == "" {
 		return nil, nil
 	}
-	res, err := c.doJSON("GET", c.Previous.HRef, nil, w, npcCorporationsCollectionV1Type)
+	res, err := c.doJSON("GET", c.Previous.HRef, nil, w, npcCorporationsCollectionV1Type, nil)
 	if err != nil {
 		return nil, err
 	}

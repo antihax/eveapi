@@ -8,6 +8,10 @@ import (
 	"golang.org/x/oauth2"
 )
 
+type contextOAuth2Key *oauth2.Token
+
+var ContextOAuth2 contextOAuth2Key
+
 // SSOAuthenticator provides interfacing to the CREST SSO. NewSSOAuthenticator is used to create
 // this structure.
 type SSOAuthenticator struct {
