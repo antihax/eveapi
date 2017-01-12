@@ -107,7 +107,7 @@ In the example custom httpHandlers below, SSOAuthenticator, is a created by NewS
 		// Exchange the code for an Access and Refresh token.
 		token, err := c.SSOAuthenticator.TokenExchange(code)
 		if err != nil {
-			return http.StatusInternalServerError, errors.New("Failed Token Exchange")
+			return http.StatusInternalServerError, err
 		}
 
 		// Obtain a token source (automaticlly pulls refresh as needed)
