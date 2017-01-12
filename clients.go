@@ -78,16 +78,14 @@ func (c *EVEAPIClient) doXML(method, urlStr string, body interface{}, v interfac
 	if err != nil {
 		return nil, err
 	}
-	if auth != nil {
 
+	if auth != nil {
 		// We were able to grab an oauth2 token from the context
 		var latestToken *oauth2.Token
 		if latestToken, err = auth.Token(); err != nil {
 			return nil, err
 		}
-
 		latestToken.SetAuthHeader(req)
-
 	}
 	res, err := c.executeRequest(req)
 

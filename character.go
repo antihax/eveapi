@@ -1,9 +1,11 @@
 package eveapi
 
 import (
-	"context"
 	"fmt"
+	"net/http/httputil"
 	"regexp"
+
+	"golang.org/x/oauth2"
 )
 
 // CharacterInfo returned data from XML API
@@ -69,7 +71,7 @@ type WalletJournalXML struct {
 }
 
 // GetCharacterInfo queries the XML API for a given characterID.
-func (c *EVEAPIClient) CharacterWalletJournalXML(auth context.Context, characterID int64, fromID int64) (*WalletJournalXML, error) {
+func (c *EVEAPIClient) CharacterWalletJournalXML(auth oauth2.TokenSource, characterID int64, fromID int64) (*WalletJournalXML, error) {
 	w := &WalletJournalXML{}
 
 	from := ""
@@ -77,11 +79,19 @@ func (c *EVEAPIClient) CharacterWalletJournalXML(auth context.Context, character
 		from = fmt.Sprintf("&fromID=%d", fromID)
 	}
 
-	url := c.base.XML + fmt.Sprintf("char/WalletJournal.xml.aspx?characterID=%d&rowCount=2560%s", characterID, from)
-	_, err := c.doXML("GET", url, nil, w, nil, nil)
+	tok, err := auth.Token()
 	if err != nil {
 		return nil, err
 	}
+
+	url := c.base.XML + fmt.Sprintf("char/WalletJournal.xml.aspx?characterID=%d&accessToken=%s&rowCount=2560%s", characterID, tok.AccessToken, from)
+
+	res, err := c.doXML("GET", url, nil, w, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+	resD, _ := httputil.DumpResponse(res, true)
+	fmt.Printf("%s %s\n", resD, err)
 	return w, nil
 }
 
