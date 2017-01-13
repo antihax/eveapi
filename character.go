@@ -2,7 +2,6 @@ package eveapi
 
 import (
 	"fmt"
-	"net/http/httputil"
 	"regexp"
 
 	"golang.org/x/oauth2"
@@ -52,7 +51,7 @@ func (c *EVEAPIClient) CharacterInfoXML(characterID int64) (*CharacterInfoXML, e
 
 type WalletJournalXML struct {
 	xmlAPIFrame
-	EmploymentHistory []struct {
+	Entries []struct {
 		RefID         int64      `xml:"refID,attr"`
 		RefTypeID     int64      `xml:"refTypeID,attr"`
 		OwnerName1    string     `xml:"ownerName1,attr"`
@@ -86,12 +85,10 @@ func (c *EVEAPIClient) CharacterWalletJournalXML(auth oauth2.TokenSource, charac
 
 	url := c.base.XML + fmt.Sprintf("char/WalletJournal.xml.aspx?characterID=%d&accessToken=%s&rowCount=2560%s", characterID, tok.AccessToken, from)
 
-	res, err := c.doXML("GET", url, nil, w, nil, nil)
+	_, err = c.doXML("GET", url, nil, w, nil, nil)
 	if err != nil {
 		return nil, err
 	}
-	resD, _ := httputil.DumpResponse(res, true)
-	fmt.Printf("%s %s\n", resD, err)
 	return w, nil
 }
 
