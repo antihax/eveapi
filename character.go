@@ -92,6 +92,51 @@ func (c *EVEAPIClient) CharacterWalletJournalXML(auth oauth2.TokenSource, charac
 	return w, nil
 }
 
+type WalletTransactionXML struct {
+	xmlAPIFrame
+	Entries []struct {
+		TransactionDateTime  EVEXMLTime `xml:"transactionDateTime,attr"`
+		TransactionID        int64      `xml:"transactionID,attr"`
+		Quantity             int64      `xml:"quantity,attr"`
+		TypeName             string     `xml:"typeName,attr"`
+		TypeID               int64      `xml:"typeID,attr"`
+		Price                float64    `xml:"price,attr"`
+		ClientID             int64      `xml:"clientID,attr"`
+		ClientTypeID         int64      `xml:"clientTypeID,attr"`
+		ClientName           string     `xml:"clientName,attr"`
+		CharacterID          int64      `xml:"characterID,attr"`
+		CharacterName        string     `xml:"characterName,attr"`
+		StationID            int64      `xml:"stationID,attr"`
+		StationName          string     `xml:"stationName,attr"`
+		TransactionType      string     `xml:"transactionType,attr"`
+		TransactionFor       string     `xml:"transactionFor,attr"`
+		JournalTransactionID int64      `xml:"journalTransactionID,attr"`
+	} `xml:"result>rowset>row"`
+}
+
+// GetCharacterInfo queries the XML API for a given characterID.
+func (c *EVEAPIClient) CharacterWalletTransactionXML(auth oauth2.TokenSource, characterID int64, fromID int64) (*WalletTransactionXML, error) {
+	w := &WalletTransactionXML{}
+
+	from := ""
+	if fromID > 0 {
+		from = fmt.Sprintf("&fromID=%d", fromID)
+	}
+
+	tok, err := auth.Token()
+	if err != nil {
+		return nil, err
+	}
+
+	url := c.base.XML + fmt.Sprintf("char/WalletTransactions.xml.aspx?characterID=%d&accessToken=%s&rowCount=2560%s", characterID, tok.AccessToken, from)
+
+	_, err = c.doXML("GET", url, nil, w, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+	return w, nil
+}
+
 const characterV4Type = "application/vnd.ccp.eve.Character-v4"
 
 type CharacterV4 struct {
