@@ -7,7 +7,7 @@ import (
 
 func TestCharacter(t *testing.T) {
 	client := &http.Client{}
-	r := EVEAPIClient(client)
+	r := NewEVEAPIClient(client)
 	c, err := r.CharacterV4ByID(1331768660)
 	if err != nil {
 		t.Errorf("Error getting character %v", err)
