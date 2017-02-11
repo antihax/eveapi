@@ -84,7 +84,8 @@ func getPageNumberFromURL(s string) (int, error) {
 	m, err := url.ParseQuery(u.RawQuery)
 	if m != nil {
 		if m["page"] != nil {
-			i, err := strconv.Atoi(m["page"][0])
+			var i int
+			i, err = strconv.Atoi(m["page"][0])
 			if err != nil {
 				return 0, err
 			}
