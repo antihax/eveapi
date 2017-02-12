@@ -3,6 +3,7 @@ package eveapi
 import (
 	"encoding/json"
 	"net/http"
+	"sync"
 
 	"golang.org/x/net/context"
 	"golang.org/x/oauth2"
@@ -14,10 +15,13 @@ var ContextOAuth2 contextOAuth2Key
 
 // SSOAuthenticator provides interfacing to the CREST SSO. NewSSOAuthenticator is used to create
 // this structure.
+
+// [TODO] lose this mutex and allow scopes to change without conflict.
 type SSOAuthenticator struct {
 	httpClient *http.Client
 	// Hide this...
 	oauthConfig *oauth2.Config
+	scopeLock   sync.Mutex
 }
 
 // Redirect type to hide oauth2 API
@@ -55,18 +59,38 @@ func NewSSOAuthenticator(client *http.Client, clientID string, clientSecret stri
 // and return success to the redirectURL.
 // It is important to create a significatly unique state for this request
 // and verify the state matches when returned to the redirectURL.
-func (c SSOAuthenticator) AuthorizeURL(state string, onlineAccess bool) string {
-	if onlineAccess == true {
-		return c.oauthConfig.AuthCodeURL(state, oauth2.AccessTypeOnline)
-	} else {
-		return c.oauthConfig.AuthCodeURL(state, oauth2.AccessTypeOffline)
+func (c *SSOAuthenticator) AuthorizeURL(state string, onlineAccess bool, scopes []string) string {
+	var url string
+
+	// lock so we cannot use another requests scopes by racing.
+	c.scopeLock.Lock()
+
+	// Save the default scopes.
+	saveScopes := c.oauthConfig.Scopes
+	if scopes != nil {
+		c.oauthConfig.Scopes = scopes
 	}
+
+	// Generate the URL
+	if onlineAccess == true {
+		url = c.oauthConfig.AuthCodeURL(state, oauth2.AccessTypeOnline)
+	} else {
+		url = c.oauthConfig.AuthCodeURL(state, oauth2.AccessTypeOffline)
+	}
+
+	// Return the scopes
+	c.oauthConfig.Scopes = saveScopes
+
+	// Unlock mutex. [TODO] This is seriously hacky... need to fix
+	c.scopeLock.Unlock()
+
+	return url
 }
 
 // TokenExchange exchanges the code returned to the redirectURL with
 // the CREST server to an access token. A caching client must be passed.
 // This client MUST cache per CCP guidelines or face banning.
-func (c SSOAuthenticator) TokenExchange(code string) (*CRESTToken, error) {
+func (c *SSOAuthenticator) TokenExchange(code string) (*CRESTToken, error) {
 
 	tok, err := c.oauthConfig.Exchange(createContext(c.httpClient), code)
 	if err != nil {
@@ -76,7 +100,7 @@ func (c SSOAuthenticator) TokenExchange(code string) (*CRESTToken, error) {
 }
 
 // TokenSource creates a refreshable token that can be passed to ESI functions
-func (c SSOAuthenticator) TokenSource(token *CRESTToken) (CRESTTokenSource, error) {
+func (c *SSOAuthenticator) TokenSource(token *CRESTToken) (CRESTTokenSource, error) {
 	return (CRESTTokenSource)(c.oauthConfig.TokenSource(createContext(c.httpClient), (*oauth2.Token)(token))), nil
 }
 
