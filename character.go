@@ -92,6 +92,23 @@ func (c *EVEAPIClient) CharacterWalletJournalXML(auth oauth2.TokenSource, charac
 	return w, nil
 }
 
+type RefTypeXML struct {
+	xmlAPIFrame
+	RefTypes []struct {
+		RefTypeName string `xml:"refTypeName,attr"`
+		RefTypeID   int64  `xml:"refTypeID,attr"`
+	} `xml:"result>rowset>row"`
+}
+
+// GetCharacterInfo queries the XML API for a given characterID.
+func (c *EVEAPIClient) RefTypesXML() (*RefTypeXML, error) {
+	w := &RefTypeXML{}
+	url := c.base.XML + "eve/RefTypes.xml.aspx"
+
+	_, err := c.doXML("GET", url, nil, w, nil, nil)
+	return w, err
+}
+
 type WalletTransactionXML struct {
 	xmlAPIFrame
 	Entries []struct {
